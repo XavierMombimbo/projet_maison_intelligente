@@ -2,6 +2,7 @@ services:
   - type: web
     name: sentinelle-maison
     runtime: python
+    plan: free
     buildCommand: pip install -r requirements.txt && bash build.sh
     startCommand: daphne -b 0.0.0.0 -p $PORT config.asgi:application
     healthCheckPath: /health/
@@ -37,9 +38,17 @@ services:
           name: sentinelle-db
           property: connectionString
       - key: REDIS_URL
-        sync: false
+        fromService:
+          type: keyvalue
+          name: sentinelle-redis
+          property: connectionString
+  - type: keyvalue
+    name: sentinelle-redis
+    plan: free
+    ipAllowList: []
 
 databases:
   - name: sentinelle-db
     databaseName: sentinelle
     user: sentinelle
+    plan: free
