@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Accueil — Sentinelle Maison{% endblock %}
+{% block content %}
+<section class="hero">
+  <div class="hero-copy">
+    <p class="eyebrow">Cybersécurité · IoT · IA locale</p>
+    <h1>Une surveillance intelligente, sans exposer votre vie privée.</h1>
+    <p class="lead">Transformez une simple webcam en sentinelle. L’analyse reste sur l’ordinateur et seules les détections utiles sont transmises de façon sécurisée.</p>
+    <div class="hero-actions">
+    {% if user.is_authenticated %}
+      <a class="button" href="{% url 'dashboard' %}">Ouvrir le tableau de bord</a>
+    {% else %}
+      <a class="button" href="{% url 'signup' %}">Commencer gratuitement</a>
+      <a class="button secondary" href="{% url 'login' %}">Se connecter</a>
+    {% endif %}
+    </div>
+  </div>
+  <div class="security-card">
+    <div class="security-card-head"><span class="status-dot"></span><strong>Système prêt à protéger</strong></div>
+    <div class="security-visual"><span class="security-visual-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3 4.5 6v5.5c0 4.6 3.1 7.8 7.5 9.5 4.4-1.7 7.5-4.9 7.5-9.5V6L12 3Z"/><path d="M9.5 12.2 11 13.7l3.7-3.7"/></svg></span><div><strong>Vie privée par conception</strong><p>Pas de flux vidéo permanent vers le serveur.</p></div></div>
+  </div>
+</section>
+<section class="trust-grid" aria-label="Garanties principales">
+  <article class="trust-item"><strong>Analyse locale</strong><span>L’intelligence artificielle travaille dans le navigateur.</span></article>
+  <article class="trust-item"><strong>Alertes immédiates</strong><span>Notification visuelle et sirène en temps réel.</span></article>
+  <article class="trust-item"><strong>Accès isolés</strong><span>Chaque maison et chaque caméra restent cloisonnées.</span></article>
+</section>
+<section class="steps-section" aria-labelledby="steps-title"><p class="eyebrow">Simple à utiliser</p><h2 id="steps-title">Votre maison sous contrôle en trois étapes</h2><div class="steps-grid"><article><span class="step-number">1</span><h3>Ajoutez une caméra</h3><p>Nommez la webcam selon la zone à surveiller.</p></article><article><span class="step-number">2</span><h3>Appairez l’ordinateur</h3><p>Utilisez le code temporaire affiché par le propriétaire.</p></article><article><span class="step-number">3</span><h3>Recevez les alertes</h3><p>Vérifiez la capture et classez immédiatement l’événement.</p></article></div></section>
+{% endblock %}

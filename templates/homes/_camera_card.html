@@ -1,0 +1,6 @@
+<article class="card camera-card">
+  <div class="card-top"><span class="camera-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M15 10l4.5-2.5v9L15 14"/><rect x="3" y="6" width="12" height="12" rx="3"/></svg></span><span class="badge {% if camera.statut_appairage == 'revoked' %}danger{% elif camera.statut_appairage == 'unpaired' %}neutral{% endif %}">{{ camera.get_statut_appairage_display }}</span></div>
+  <h3><a href="{% url 'camera-detail' camera.pk %}">{{ camera.nom }}</a></h3>
+  <p>{{ camera.maison.nom }}</p>
+  <p class="muted"><span class="status-dot {% if not camera.surveillance_active %}offline{% endif %}"></span> Surveillance {% if camera.surveillance_active %}<strong class="success">active</strong>{% else %}inactive{% endif %}</p>
+</article>

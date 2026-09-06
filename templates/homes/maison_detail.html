@@ -1,0 +1,5 @@
+{% extends "base.html" %}
+{% block title %}{{ maison.nom }}{% endblock %}
+{% block content %}<div class="page-heading"><div><p class="eyebrow">Maison protégée</p><h1>{{ maison.nom }}</h1><p>Caméras et personnes autorisées dans cet espace.</p></div>{% if maison.proprietaire == user %}<a class="button" href="{% url 'camera-create' %}">Ajouter une caméra</a>{% endif %}</div>
+<section><div class="section-heading"><h2>Caméras autorisées</h2></div><div class="grid">{% for camera in cameras %}{% include "homes/_camera_card.html" %}{% empty %}<div class="empty">Aucune caméra visible.</div>{% endfor %}</div></section>
+<section><div class="section-heading"><h2>Membres</h2></div><div class="table-wrap"><table><thead><tr><th>Utilisateur</th><th>Rôle</th><th>Invitation</th></tr></thead><tbody>{% for membre in maison.membres.all %}<tr><td><strong>{{ membre.utilisateur.username }}</strong></td><td>{{ membre.get_role_display }}</td><td><span class="status-pill {% if membre.statut != 'accepted' %}new{% endif %}">{{ membre.get_statut_display }}</span></td></tr>{% endfor %}</tbody></table></div></section>{% endblock %}

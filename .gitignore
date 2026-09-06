@@ -1,0 +1,28 @@
+# Secrets and local configuration
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Django runtime data
+db.sqlite3
+db.sqlite3-journal
+media/
+captures/
+staticfiles/
+
+# IDE and operating system
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+

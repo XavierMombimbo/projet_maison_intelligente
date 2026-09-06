@@ -1,0 +1,25 @@
+.realtime-bar { margin: -8px 0 26px; padding: 13px 16px; display: flex; align-items: center; justify-content: space-between; gap: 16px; color: var(--ink-soft); background: #fff; border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--shadow-sm); }
+.realtime-bar > div { display: flex; align-items: center; gap: 10px; }
+.realtime-bar .button.secondary { min-height: 40px; margin: 0; padding: 8px 13px; }
+.connection-dot { width: 10px; height: 10px; flex: 0 0 auto; background: #d28a0b; border-radius: 50%; box-shadow: 0 0 0 4px rgba(210,138,11,.14); }
+.connection-dot.is-online { background: var(--success); box-shadow: 0 0 0 4px rgba(8,122,85,.14); }
+.connection-dot.is-offline { background: var(--danger); box-shadow: 0 0 0 4px rgba(180,35,24,.13); }
+.alerts-section { margin-bottom: 52px; }
+.event-row.is-new { animation: alert-highlight 2.2s ease-out; }
+.alert-toasts { position: fixed; top: 88px; right: 22px; z-index: 100; width: min(400px, calc(100vw - 32px)); display: grid; gap: 12px; pointer-events: none; }
+.alert-toast { position: relative; overflow: hidden; padding: 17px 44px 17px 18px; color: var(--ink); background: #fff; border: 1px solid #e2b55f; border-left: 5px solid #d28a0b; border-radius: 14px; box-shadow: var(--shadow-lg); pointer-events: auto; animation: toast-enter 260ms ease-out; }
+.alert-toast::before { content: "Alerte de sécurité"; display: block; margin-bottom: 4px; color: #855000; font-size: .7rem; font-weight: 850; letter-spacing: .1em; text-transform: uppercase; }
+.alert-toast strong, .alert-toast span { display: block; }
+.alert-toast span { margin-top: 3px; color: var(--muted); font-size: .88rem; }
+.alert-toast a { min-height: 44px; display: inline-flex; align-items: center; margin-top: 8px; font-weight: 800; }
+.alert-toast button { position: absolute; top: 4px; right: 4px; width: 44px; height: 44px; display: grid; place-items: center; padding: 0; color: var(--muted); background: transparent; border: 0; border-radius: 9px; font-size: 1.35rem; cursor: pointer; }
+.alert-toast button:hover { color: var(--ink); background: #f1f5f4; }
+.decision-panel { margin-top: 24px; border-left: 4px solid #d28a0b; }
+.decision-panel h2 { margin-top: 0; }
+.decision-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+.decision-actions .button.secondary { margin-left: 0; }
+.alert-sound-button { display: block; width: 100%; margin: 0 !important; }
+@keyframes alert-highlight { 0% { background: #fff1ca; border-color: #d28a0b; } 100% { background: #fff; border-color: var(--line); } }
+@keyframes toast-enter { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+@media (max-width: 768px) { .alert-toasts { top: 82px; right: 16px; } .realtime-bar { align-items: flex-start; flex-direction: column; } .realtime-bar .button.secondary { width: 100%; } }
+@media (prefers-reduced-motion: reduce) { .alert-toast, .event-row.is-new { animation: none; } }

@@ -1,0 +1,3 @@
+{% extends "base.html" %}
+{% block title %}{{ form_title|default:"Configuration" }}{% endblock %}
+{% block content %}<div class="auth-shell"><div class="auth-context"><p class="eyebrow">Configuration sécurisée</p><h1>{{ form_title|default:"Ajouter" }}</h1><p class="lead">{{ form_intro|default:"Renseignez les informations nécessaires pour continuer." }}</p></div><section class="auth-card"><p class="eyebrow">{{ form_eyebrow|default:"Configuration" }}</p><h2>{{ form_title|default:"Ajouter" }}</h2><form method="post" novalidate>{% csrf_token %}{{ form.as_p }}<button class="button" type="submit">{{ submit_label|default:"Enregistrer" }}</button></form></section></div>{% endblock %}

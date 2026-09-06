@@ -1,0 +1,45 @@
+services:
+  - type: web
+    name: sentinelle-maison
+    runtime: python
+    buildCommand: pip install -r requirements.txt && bash build.sh
+    startCommand: daphne -b 0.0.0.0 -p $PORT config.asgi:application
+    healthCheckPath: /health/
+    envVars:
+      - key: DJANGO_DEBUG
+        value: "False"
+      - key: DJANGO_SECURE_SSL_REDIRECT
+        value: "True"
+      - key: DJANGO_SECURE_COOKIES
+        value: "True"
+      - key: DJANGO_ALLOWED_HOSTS
+        sync: false
+      - key: DJANGO_CSRF_TRUSTED_ORIGINS
+        sync: false
+      - key: DJANGO_SECRET_KEY
+        generateValue: true
+      - key: PAIRING_CODE_PEPPER
+        generateValue: true
+      - key: CAMERA_CREDENTIAL_PEPPER
+        generateValue: true
+      - key: CAMERA_JWT_SECRET
+        generateValue: true
+      - key: AUDIT_LOG_PEPPER
+        generateValue: true
+      - key: CAPTURE_ENCRYPTION_KEY
+        sync: false
+      - key: EVENT_SIGNING_ENCRYPTION_KEY
+        sync: false
+      - key: CHANNEL_ENCRYPTION_KEY
+        sync: false
+      - key: DATABASE_URL
+        fromDatabase:
+          name: sentinelle-db
+          property: connectionString
+      - key: REDIS_URL
+        sync: false
+
+databases:
+  - name: sentinelle-db
+    databaseName: sentinelle
+    user: sentinelle

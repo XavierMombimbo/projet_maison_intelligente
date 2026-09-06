@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Événement {{ evenement.pk }}{% endblock %}
+{% block content %}
+<p class="eyebrow">{{ evenement.maison.nom }} · {{ evenement.camera.nom }}</p>
+<div class="page-heading"><div><h1>{% if evenement.simule %}Simulation{% else %}Personne détectée{% endif %}</h1><p>Analysez la capture avant de prendre une décision.</p></div><span class="status-pill {{ evenement.statut }}">{{ evenement.get_statut_display }}</span></div>
+<section class="detail-grid">
+  <article class="card"><dl><dt>Date et heure</dt><dd>{{ evenement.horodatage|date:"d/m/Y à H:i:s" }}</dd><dt>Confiance locale</dt><dd>{% widthratio evenement.confiance_ia 1 100 %} %<meter class="confidence-meter" min="0" max="1" value="{{ evenement.confiance_ia }}">{{ evenement.confiance_ia }}</meter></dd><dt>Origine</dt><dd>{% if evenement.simule %}Simulation de démonstration{% else %}COCO-SSD dans le navigateur{% endif %}</dd></dl></article>
+  <figure class="capture-frame"><img src="{% url 'event-capture' evenement.pk %}" alt="Capture liée à l’événement {{ evenement.pk }}"><figcaption>Capture déchiffrée uniquement après contrôle de votre autorisation.</figcaption></figure>
+</section>
+{% if peut_decider and evenement.statut == "new" %}
+<section class="card decision-panel" aria-labelledby="decision-title">
+  <h2 id="decision-title">Décider de cette alerte</h2>
+  <p>Le classement ne coupe pas la surveillance de la caméra.</p>
+  <div class="decision-actions">
+    <form method="post" action="{% url 'event-decision' evenement.pk %}" data-confirm="Classer définitivement cet événement comme fausse alerte ?">{% csrf_token %}<input type="hidden" name="decision" value="false_alarm"><button class="button secondary" type="submit">Marquer comme fausse alerte</button></form>
+    <form method="post" action="{% url 'event-decision' evenement.pk %}" data-confirm="Confirmer définitivement cette intrusion ?">{% csrf_token %}<input type="hidden" name="decision" value="confirmed"><button class="button danger" type="submit">Confirmer l’intrusion</button></form>
+  </div>
+</section>
+{% endif %}
+{% endblock %}
