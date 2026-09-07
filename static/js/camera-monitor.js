@@ -125,6 +125,15 @@
     let detectionTimer = null;
     let stateTimer = null;
     let heartbeatTimer = null;
+    let serverClockOffsetMs = 0;
+
+    const synchronizeServerClock = (response, requestStartedAt) => {
+      const serverTimestamp = Date.parse(response.headers.get("Date") || "");
+      if (!Number.isFinite(serverTimestamp)) return;
+      const requestFinishedAt = Date.now();
+      const requestMidpoint = requestStartedAt + (requestFinishedAt - requestStartedAt) / 2;
+      serverClockOffsetMs = serverTimestamp - requestMidpoint;
+    };
 
     const loadRuntimeScript = (source) => new Promise((resolve, reject) => {
       const url = new URL(source, window.location.origin);
@@ -197,11 +206,13 @@
     };
 
     const renewToken = async () => {
+      const requestStartedAt = Date.now();
       const response = await fetch(root.dataset.tokenUrl, {
         method: "POST",
         headers: {"Content-Type": "application/json"},
         body: JSON.stringify({device_id: credentials.deviceId, device_secret: credentials.deviceSecret})
       });
+      synchronizeServerClock(response, requestStartedAt);
       if (!response.ok) {
         const error = new Error(
           response.status === 401
@@ -227,7 +238,9 @@
       const token = await validToken();
       const headers = new Headers(options.headers || {});
       headers.set("Authorization", `Bearer ${token}`);
+      const requestStartedAt = Date.now();
       const response = await fetch(url, {...options, headers});
+      synchronizeServerClock(response, requestStartedAt);
       if (response.status === 401 && retry) {
         await renewToken();
         return cameraFetch(url, options, false);
@@ -315,7 +328,7 @@
       const blob = await frameBlob(simulated);
       const eventId = crypto.randomUUID();
       const requestNonce = crypto.randomUUID();
-      const requestTimestamp = Math.floor(Date.now() / 1000);
+      const requestTimestamp = Math.floor((Date.now() + serverClockOffsetMs) / 1000);
       const formData = new FormData();
       formData.append("event_id", eventId);
       formData.append("confidence", String(confidence));

@@ -207,7 +207,7 @@ CONTENT_SECURITY_POLICY = "; ".join(
         "object-src 'none'",
         "frame-ancestors 'none'",
         "form-action 'self'",
-        "script-src 'self'",
+        "script-src 'self' 'wasm-unsafe-eval'",
         "style-src 'self'",
         "img-src 'self' data: blob:",
         "media-src 'self' blob:",

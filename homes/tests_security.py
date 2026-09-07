@@ -16,6 +16,7 @@ class SecurityHeaderTests(TestCase):
         self.assertIn("default-src 'self'", policy)
         self.assertIn("object-src 'none'", policy)
         self.assertIn("frame-ancestors 'none'", policy)
+        self.assertIn("script-src 'self' 'wasm-unsafe-eval'", policy)
         self.assertNotIn("'unsafe-inline'", policy)
         self.assertNotIn("'unsafe-eval'", policy)
         self.assertEqual(
