@@ -108,7 +108,7 @@ def create_detection_event(
                 metadonnees={
                     "capture": image_metadata,
                     "analyse_locale": True,
-                    "stabilite_images": 3 if not simulated else 0,
+                    "stabilite_images": 1 if not simulated else 0,
                     "signature_hmac": "HMAC-SHA256/v1",
                     "nonce_requete": str(request_nonce) if request_nonce else None,
                     "horodatage_requete": request_timestamp,

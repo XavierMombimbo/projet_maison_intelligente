@@ -3,9 +3,9 @@
 
   const DB_NAME = "sentinelle-camera";
   const STORE_NAME = "credentials";
-  const PERSON_THRESHOLD = 0.65;
-  const REQUIRED_STABLE_FRAMES = 3;
-  const DETECTION_INTERVAL_MS = 700;
+  const PERSON_THRESHOLD = 0.45;
+  const REQUIRED_STABLE_FRAMES = 1;
+  const DETECTION_INTERVAL_MS = 350;
   const EVENT_COOLDOWN_MS = 15000;
 
   const openDatabase = () => new Promise((resolve, reject) => {
@@ -246,7 +246,7 @@
         monitoringState.classList.toggle("active", monitoringActive);
         if (!monitoringActive) {
           consecutiveFrames = 0;
-          stabilityState.textContent = "0 / 3 images";
+          stabilityState.textContent = `0 / ${REQUIRED_STABLE_FRAMES} image`;
         }
       } catch (error) {
         monitoringActive = false;
@@ -312,7 +312,6 @@
         setStatus("Activez d’abord la surveillance depuis le compte propriétaire.", true);
         return;
       }
-      cooldownUntil = Date.now() + EVENT_COOLDOWN_MS;
       const blob = await frameBlob(simulated);
       const eventId = crypto.randomUUID();
       const requestNonce = crypto.randomUUID();
@@ -345,6 +344,7 @@
         });
         const body = await response.json();
         if (!response.ok) throw new Error(body.detail || "Échec de la transmission.");
+        cooldownUntil = Date.now() + EVENT_COOLDOWN_MS;
         lastEvent.textContent = `${simulated ? "Simulation" : "Détection"} envoyée à ${new Date().toLocaleTimeString()}`;
         setStatus("Événement transmis ; le flux vidéo reste local.");
       } catch (error) {
@@ -380,10 +380,9 @@
         try {
           model = await window.YoloDetector.create({
             modelUrl: root.dataset.yoloModelUrl,
-            wasmUrl: root.dataset.yoloWasmUrl,
-            wasmPath: new URL("./", root.dataset.yoloWasmUrl).toString()
+            wasmUrl: root.dataset.yoloWasmUrl
           });
-          modelState.textContent = "YOLO11n prêt (classe person)";
+          modelState.textContent = "YOLO11n prêt — détection instantanée";
           return;
         } catch (error) {
           console.warn("YOLO indisponible, repli COCO-SSD", error);
@@ -423,6 +422,7 @@
         stopButton.disabled = false;
         setStatus("Webcam active. Analyse et aperçu locaux uniquement.");
         try { await loadModel(); } catch (error) { modelState.textContent = "Indisponible — simulation disponible"; setStatus(error.message, true); }
+        void analyzeFrame();
         detectionTimer = setInterval(analyzeFrame, DETECTION_INTERVAL_MS);
         await heartbeat();
       } catch (error) {

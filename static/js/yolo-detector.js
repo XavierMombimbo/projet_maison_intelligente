@@ -16,18 +16,18 @@
   class YoloDetector {
     constructor(session) { this.session = session; }
 
-    static async create({modelUrl, wasmUrl, wasmPath}) {
+    static async create({modelUrl, wasmUrl}) {
       if (!window.ort?.InferenceSession) throw new Error("Le runtime YOLO n’est pas chargé.");
-      window.ort.env.wasm.wasmPaths = wasmPath;
+      // The UMD WASM build already embeds its JavaScript glue. Overriding only
+      // the binary keeps that embedded module in use and avoids a second
+      // dynamic request for ort-wasm-simd-threaded.mjs.
+      window.ort.env.wasm.wasmPaths = {wasm: new URL(wasmUrl, window.location.origin).toString()};
       window.ort.env.wasm.numThreads = 1;
       window.ort.env.wasm.simd = true;
-      const executionProviders = navigator.gpu ? ["webgpu", "wasm"] : ["wasm"];
-      let session;
-      try {
-        session = await window.ort.InferenceSession.create(modelUrl, {executionProviders, graphOptimizationLevel: "all"});
-      } catch (_) {
-        session = await window.ort.InferenceSession.create(modelUrl, {executionProviders: ["wasm"], graphOptimizationLevel: "all"});
-      }
+      const session = await window.ort.InferenceSession.create(modelUrl, {
+        executionProviders: ["wasm"],
+        graphOptimizationLevel: "all"
+      });
       return new YoloDetector(session);
     }
 

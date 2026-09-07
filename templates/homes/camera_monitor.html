@@ -35,7 +35,7 @@
       <div class="control-section demo-section"><span class="control-label">Présentation</span><button class="button demo" id="simulate-detection" type="button">Simuler une détection (DÉMO)</button><p class="muted">Fonctionne même si le modèle IA ou la webcam n’est pas disponible. L’événement reste clairement identifié comme simulation.</p></div>
       <dl class="monitor-metrics">
         <dt>Modèle IA</dt><dd id="model-state">Non chargé</dd>
-        <dt>Stabilité</dt><dd id="stability-state">0 / 3 images</dd>
+        <dt>Stabilité</dt><dd id="stability-state">0 / 1 image</dd>
         <dt>Dernier événement</dt><dd id="last-event">Aucun</dd>
       </dl>
       <a class="text-link" href="{% url 'connect-camera' %}" id="pairing-link" hidden>Appairer d’abord cet ordinateur</a>
@@ -46,8 +46,8 @@
 {% block extra_scripts %}
 <script src="{% static 'js/vision-runtime-bootstrap.js' %}?v=20260902-runtime4"></script>
 <script src="{% static 'vendor/yolo/ort.wasm.min.js' %}?v=20260906-yolo"></script>
-<script src="{% static 'js/yolo-detector.js' %}?v=20260906-yolo"></script>
+<script src="{% static 'js/yolo-detector.js' %}?v=20260907-instant1"></script>
 <script src="{% static 'vendor/tf-4.22.0.min.js' %}?v=20260902-runtime4"></script>
 <script src="{% static 'vendor/coco-ssd-2.2.3.min.js' %}?v=20260902-runtime4"></script>
-<script src="{% static 'js/camera-monitor.js' %}?v=20260902-runtime4"></script>
+<script src="{% static 'js/camera-monitor.js' %}?v=20260907-instant1"></script>
 {% endblock %}
