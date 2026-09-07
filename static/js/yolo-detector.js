@@ -1,7 +1,7 @@
 (() => {
   "use strict";
 
-  const MODEL_SIZE = 640;
+  const MODEL_SIZE = 320;
   const PERSON_CLASS = 0;
 
   const iou = (a, b) => {

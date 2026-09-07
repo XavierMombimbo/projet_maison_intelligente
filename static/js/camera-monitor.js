@@ -405,7 +405,7 @@
             modelUrl: root.dataset.yoloModelUrl,
             wasmUrl: root.dataset.yoloWasmUrl
           });
-          modelState.textContent = "YOLO11n prêt — détection instantanée";
+          modelState.textContent = "YOLO11n 320 prêt — détection instantanée";
           return;
         } catch (error) {
           console.warn("YOLO indisponible, repli COCO-SSD", error);
