@@ -23,6 +23,7 @@
       // dynamic request for ort-wasm-simd-threaded.mjs.
       window.ort.env.wasm.wasmPaths = {wasm: new URL(wasmUrl, window.location.origin).toString()};
       window.ort.env.wasm.numThreads = 1;
+      window.ort.env.wasm.proxy = true;
       window.ort.env.wasm.simd = true;
       const session = await window.ort.InferenceSession.create(modelUrl, {
         executionProviders: ["wasm"],

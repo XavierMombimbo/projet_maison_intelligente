@@ -387,6 +387,16 @@
       }
     };
 
+    const scheduleAnalysis = (delay = 0) => {
+      if (!running) return;
+      if (detectionTimer) clearTimeout(detectionTimer);
+      detectionTimer = setTimeout(async () => {
+        detectionTimer = null;
+        await analyzeFrame();
+        if (running) scheduleAnalysis(DETECTION_INTERVAL_MS);
+      }, delay);
+    };
+
     const loadModel = async () => {
       modelState.textContent = "Chargement…";
       if (yoloRuntimeReady()) {
@@ -417,7 +427,7 @@
       liveIndicator.hidden = true;
       startButton.disabled = !credentials;
       stopButton.disabled = true;
-      if (detectionTimer) clearInterval(detectionTimer);
+      if (detectionTimer) clearTimeout(detectionTimer);
       detectionTimer = null;
     }
 
@@ -435,8 +445,7 @@
         stopButton.disabled = false;
         setStatus("Webcam active. Analyse et aperçu locaux uniquement.");
         try { await loadModel(); } catch (error) { modelState.textContent = "Indisponible — simulation disponible"; setStatus(error.message, true); }
-        void analyzeFrame();
-        detectionTimer = setInterval(analyzeFrame, DETECTION_INTERVAL_MS);
+        scheduleAnalysis();
         await heartbeat();
       } catch (error) {
         stopCamera();
