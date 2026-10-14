@@ -25,6 +25,10 @@ python -m gateway face-check --model-root E:\CodexCaches\sentinelle-face-2026101
 
 Chaque commande utilise une seule image en mémoire, demande un seul visage avec un score de détection d’au moins 0,65, produit un gabarit ArcFace normalisé de 2 048 octets, puis libère immédiatement la webcam. L’enrôlement envoie seulement le gabarit chiffré au serveur. La comparaison synchronise le cache DPAPI de la passerelle sur `E:` et ne sort que `reconnu`, `inconnu`, `indisponible`, ou une erreur de qualité. Elle ne déclenche ni ouverture, ni fermeture, ni commande d’accès.
 
+### Mesure consentie FAR / FRR
+
+Après le pilote, chaque participant volontaire effectue au moins dix comparaisons de son propre visage et dix comparaisons avec un visage volontaire différent ou aucun visage. Pour chaque condition `jour`, `faible lumière`, `distance`, `occultation` et `plusieurs visages`, consigner seulement les compteurs suivants dans le compte rendu : essais authentiques, reconnus, faux rejets, essais non correspondants, inconnus, fausses acceptations et erreurs de qualité. Calculer `FRR = faux rejets / essais authentiques exploitables` et `FAR = fausses acceptations / essais non correspondants exploitables`; exclure les erreurs de qualité des deux dénominateurs et les déclarer séparément. Aucun fichier image, UUID de profil, vecteur, score individuel ou nom de participant ne doit figurer dans ce compte rendu.
+
 ## Chiffrement serveur
 
 Les gabarits sont chiffrés par AES-GCM avec `BIOMETRIC_ENCRYPTION_KEY`, une clé de 32 octets encodée en base64 URL-safe. L’identifiant UUID du profil est utilisé comme donnée associée. La taille maximale est contrôlée par `BIOMETRIC_TEMPLATE_MAX_BYTES`, soit 64 Kio par défaut.
