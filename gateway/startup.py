@@ -81,6 +81,7 @@ def launch(config, *, sleep=time.sleep):
     if config['mode'] == 'webcam' and not config['recipe']:
         revision = verify_release(config['release_receipt'], Path(__file__).resolve().parents[1])
         os.environ['SENTINELLE_SOURCE_REVISION'] = revision
+        os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
     credentials = load_credentials(path=Path(config['credentials_file']))
     cache = Path(config['cache_root'])
     while not cache.anchor or not Path(cache.anchor).exists():

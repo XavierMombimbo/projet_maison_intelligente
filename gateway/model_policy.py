@@ -25,6 +25,7 @@ def require_webcam_approval(*, registry_path=None, source_revision=None):
             or model.get('artifact') != 'static/vendor/yolo/yolo11n.onnx'):
         raise ModelApprovalError('Artefact approuve different du modele webcam integre.')
     if source_revision is None:
+        os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
         from django.conf import settings
         # Load the configured dotenv before looking up the deployment revision.
         _ = settings.DEBUG
