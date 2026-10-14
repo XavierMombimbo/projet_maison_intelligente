@@ -1,3 +1,6 @@
+import base64
+import binascii
+
 from django.utils import timezone
 from django.urls import reverse
 from cryptography.exceptions import InvalidTag
@@ -60,6 +63,20 @@ class BiometricPurgeItemSerializer(serializers.Serializer):
 
 class BiometricPurgeAckSerializer(serializers.Serializer):
     purges = BiometricPurgeItemSerializer(many=True, allow_empty=False)
+
+
+class BiometricEnrollmentSerializer(serializers.Serializer):
+    format = serializers.ChoiceField(choices=("arcface-f32le-v1",))
+    template = serializers.CharField(max_length=4096, trim_whitespace=True)
+
+    def validate_template(self, value):
+        try:
+            payload = base64.b64decode(value.encode("ascii"), validate=True)
+        except (UnicodeEncodeError, binascii.Error) as exc:
+            raise serializers.ValidationError("Gabarit ArcFace invalide.") from exc
+        if len(payload) != 512 * 4:
+            raise serializers.ValidationError("Taille de gabarit ArcFace invalide.")
+        return payload
 
 
 class CameraViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet):
@@ -305,6 +322,36 @@ class CameraBiometricPurgeAckAPIView(APIView):
             metadata={"count": len(confirmed)},
         )
         return Response({"confirmed": confirmed})
+
+
+class CameraBiometricEnrollmentAPIView(APIView):
+    """Trusted local gateways enrol only active, consenting house profiles."""
+
+    authentication_classes = [CameraJWTAuthentication]
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, profile_id):
+        camera = request.user.camera
+        profile = ProfilBiometrique.objects.filter(
+            pk=profile_id,
+            maison=camera.maison,
+            statut=StatutProfilBiometrique.ACTIF,
+        ).first()
+        if profile is None:
+            return Response({"detail": "Profil biométrique indisponible."}, status=status.HTTP_404_NOT_FOUND)
+        serializer = BiometricEnrollmentSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        template = serializer.validated_data["template"]
+        profile.set_template(template, serializer.validated_data["format"])
+        record_audit(
+            "biometric.profile.enroll",
+            request=request,
+            camera=camera,
+            maison=camera.maison,
+            target=profile,
+            metadata={"format": profile.format_gabarit, "bytes": len(template)},
+        )
+        return Response({"profile_id": str(profile.pk), "version": profile.version, "status": "enrolled"})
 
 
 class CameraHeartbeatAPIView(CameraClockMixin, APIView):

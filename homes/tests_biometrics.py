@@ -200,3 +200,33 @@ class BiometricGatewayAPITests(TestCase):
 
         self.assertEqual(response.status_code, 400)
         self.assertFalse(AccusePurgeBiometrique.objects.exists())
+
+    def test_gateway_can_enroll_an_active_profile_in_its_own_house(self):
+        self.profile.gabarit_chiffre = None
+        self.profile.nonce_gabarit = None
+        self.profile.format_gabarit = ""
+        self.profile.save(update_fields=("gabarit_chiffre", "nonce_gabarit", "format_gabarit"))
+        template = bytes(range(256)) * 8
+        response = self.client.post(
+            reverse("api-camera-biometric-enroll", kwargs={"profile_id": self.profile.pk}),
+            {"format": "arcface-f32le-v1", "template": base64.b64encode(template).decode("ascii")},
+            content_type="application/json", **self.auth,
+        )
+        self.assertEqual(response.status_code, 200)
+        self.profile.refresh_from_db()
+        self.assertEqual(self.profile.decrypt_template(), template)
+        self.assertEqual(self.profile.format_gabarit, "arcface-f32le-v1")
+        self.assertTrue(JournalAudit.objects.filter(action="biometric.profile.enroll").exists())
+
+    def test_gateway_cannot_enroll_a_profile_from_another_house(self):
+        owner = User.objects.create_user("other-enroll", "other-enroll@example.test", "Secret!2026")
+        other = ProfilBiometrique.objects.create(
+            maison=Maison.objects.create(nom="Autre maison", proprietaire=owner),
+            utilisateur=owner, libelle="Profil étranger",
+        )
+        response = self.client.post(
+            reverse("api-camera-biometric-enroll", kwargs={"profile_id": other.pk}),
+            {"format": "arcface-f32le-v1", "template": base64.b64encode(bytes(range(256)) * 8).decode("ascii")},
+            content_type="application/json", **self.auth,
+        )
+        self.assertEqual(response.status_code, 404)

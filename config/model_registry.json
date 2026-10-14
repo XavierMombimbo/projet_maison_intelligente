@@ -42,17 +42,24 @@
       "hardware": "Python 3.10+ gateway; 384x384 and 30.5M parameters; benchmark required on target CPU/GPU"
     },
     {
-      "id": "insightface-arcface",
-      "status": "candidate_licensed_weights_required",
+      "id": "insightface-arcface-buffalo-l",
+      "status": "academic_approved",
       "task": "face_detection_and_recognition",
-      "version": "insightface-2.0",
-      "source": "https://pypi.org/project/insightface/2.0/",
-      "license": "MIT code; public pretrained weights are non-commercial research only",
+      "version": "insightface-0.7.3 / buffalo_l-v0.7",
+      "source": "https://github.com/deepinsight/insightface/releases/download/v0.7/buffalo_l.zip",
+      "license": "MIT code; public pretrained weights limited to academic non-commercial research",
       "classes": "voluntarily enrolled identities; unknown remains unknown",
-      "artifact": null,
-      "bytes": null,
-      "sha256": null,
-      "hardware": "Python 3.10+ gateway with ONNX Runtime CPU or CUDA; benchmark and licensed weight manifest required"
+      "artifact": "external cache models/buffalo_l; never committed",
+      "bytes": 341268726,
+      "sha256": "package manifest below",
+      "hardware": "Python gateway with ONNX Runtime CPU; one voluntary enrolment at a time; no raw image persisted",
+      "files": [
+        {"name": "1k3d68.onnx", "bytes": 143607619, "sha256": "df5c06b8a0c12e422b2ed8947b8869faa4105387f199c477af038aa01f9a45cc"},
+        {"name": "2d106det.onnx", "bytes": 5030888, "sha256": "f001b856447c413801ef5c42091ed0cd516fcd21f2d6b79635b1e733a7109dbf"},
+        {"name": "det_10g.onnx", "bytes": 16923827, "sha256": "5838f7fe053675b1c7a08b633df49e7af5495cee0493c7dcf6697200b85b5b91"},
+        {"name": "genderage.onnx", "bytes": 1322532, "sha256": "4fde69b1c810857b88c64a335084f1c3fe8f01246c9a191b48c7bb756d6652fb"},
+        {"name": "w600k_r50.onnx", "bytes": 174383860, "sha256": "4c06341c33c2ca1f86781dab0e829f88ad5b64be9fba56e56bc9ebdefc619e43"}
+      ]
     },
     {
       "id": "bytetrack",

@@ -116,6 +116,16 @@ class GatewayAPIClient:
     def biometric_profiles(self, token: str) -> dict:
         return self._request("api/camera/me/profils-biometriques/", token=token)
 
+    def enroll_biometric_profile(self, token: str, profile_id: str, *, template: bytes, template_format: str) -> dict:
+        import base64
+
+        return self._request(
+            f"api/camera/me/profils-biometriques/{profile_id}/enroler/",
+            method="POST",
+            payload={"format": template_format, "template": base64.b64encode(template).decode("ascii")},
+            token=token,
+        )
+
     def acknowledge_biometric_purges(self, token: str, purges: list[dict]) -> dict:
         return self._request(
             "api/camera/me/profils-biometriques/purges/",

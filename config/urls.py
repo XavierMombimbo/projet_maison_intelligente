@@ -20,6 +20,7 @@ from accounts.views import (
 )
 from accounts.mobile_views import MobileAPITestView
 from homes.api import (
+    CameraBiometricEnrollmentAPIView,
     CameraBiometricProfilesAPIView,
     CameraBiometricPurgeAckAPIView,
     CameraHeartbeatAPIView,
@@ -86,6 +87,11 @@ urlpatterns = [
         "api/camera/me/profils-biometriques/",
         CameraBiometricProfilesAPIView.as_view(),
         name="api-camera-biometric-profiles",
+    ),
+    path(
+        "api/camera/me/profils-biometriques/<uuid:profile_id>/enroler/",
+        CameraBiometricEnrollmentAPIView.as_view(),
+        name="api-camera-biometric-enroll",
     ),
     path(
         "api/camera/me/profils-biometriques/purges/",

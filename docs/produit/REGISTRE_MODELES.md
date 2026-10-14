@@ -8,7 +8,7 @@
 - **Calcul :** l'analyse reste sur la passerelle de la maison. Le serveur reçoit les événements signés et les captures utiles, pas le flux vidéo continu.
 - **Mobile :** Flutter, Android en premier. Le code restera compatible iOS, dont les builds nécessitent macOS/Xcode. Flutter est sous BSD-3-Clause et prend en charge Android et iOS.
 - **Objets et animaux :** conserver YOLO11n uniquement pour le développement actuel. Évaluer **RF-DETR Nano 1.10.1** comme candidat de production permissif pour `person`, `dog`, `cat` et les classes COCO utiles.
-- **Visages :** utiliser l'API InsightFace/ArcFace seulement avec des poids dont Sentinelle possède les droits. Les poids publics InsightFace ne sont pas autorisés pour un produit commercial.
+- **Visages :** la recette FACE-002 utilise InsightFace 0.7.3 et ArcFace `buffalo_l` uniquement pour le projet académique non commercial confirmé. Les poids publics InsightFace restent interdits pour un produit commercial ; ils sont hors Git sur E:, hachés fichier par fichier dans le registre, et aucun visage brut n’est conservé.
 - **Postures, gestes et actions :** RTMPose puis MediaPipe sont les premiers candidats. MMAction2 reste expérimental jusqu'à définition des actions, des données et du matériel.
 
 ## État des composants
@@ -18,7 +18,7 @@
 | YOLO11n 320 ONNX | Développement seulement | Modèle local et vérifié, mais AGPL-3.0 sauf licence Enterprise |
 | COCO-SSD 2.2.3 | Bloqué | Le code est local, mais les poids de repli ne sont ni vendorizés ni hachés |
 | RF-DETR Nano 1.10.1 | Candidat production | Paquet et poids Nano désignés Apache-2.0 ; benchmark passerelle requis |
-| InsightFace 2.0 / ArcFace | Candidat sous condition | Code MIT ; poids publics réservés à la recherche non commerciale |
+| InsightFace 0.7.3 / ArcFace `buffalo_l` | Approuvé académique | Code MIT ; poids publics réservés à la recherche non commerciale, empreintes vérifiées avant usage |
 | ByteTrack | Candidat | Suivi MIT sans poids ; commit à figer lors de l'intégration |
 | RTMPose / MMPose 1.3.2 | Candidat | Code Apache-2.0 ; vérifier séparément checkpoint et données |
 | MediaPipe 1.0.1 | Candidat | Code Apache-2.0 ; figer le bundle de tâche et traiter la télémétrie |
