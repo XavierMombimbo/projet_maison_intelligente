@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Connecter cet ordinateur{% endblock %}
+{% block content %}
+<div class="auth-shell pairing-layout"><div class="auth-context"><p class="eyebrow">Passerelle IoT</p><h1>Transformez cet ordinateur en caméra.</h1><p class="lead">L’appairage rattache cette webcam à une seule maison. Aucun flux vidéo continu ne sera envoyé.</p></div><section class="auth-card pairing-connect">
+  {% if paired %}
+    <p class="eyebrow">Appairage réussi</p>
+    <h1>{{ camera.nom }} est connectée</h1>
+    <p>Cet ordinateur possède maintenant une identité caméra propre, limitée à <strong>{{ camera.maison.nom }}</strong>.</p>
+    <div id="credential-status" class="notice">Enregistrement sécurisé de l’identité dans ce navigateur…</div>
+    {{ device_credentials|json_script:"camera-credentials" }}
+    <a class="button" href="{% url 'camera-monitor' %}">Ouvrir la surveillance locale</a>
+  {% else %}
+    <p class="eyebrow">Ordinateur-caméra</p>
+    <h1>Connecter cet ordinateur</h1>
+    <p>Saisissez le code temporaire affiché par le propriétaire. La webcam ne sera pas activée pendant cette étape.</p>
+    <form method="post" novalidate>
+      {% csrf_token %}{{ form.as_p }}
+      <button class="button" type="submit">Appairer la caméra</button>
+    </form>
+    <p class="muted">Le code expire après cinq minutes et devient inutilisable après ce premier appairage.</p>
+  {% endif %}
+</section></div>
+{% endblock %}
+{% block extra_scripts %}{% if paired %}<script src="{% static 'js/pair-camera.js' %}?v=20260902-security1" defer></script>{% endif %}{% endblock %}

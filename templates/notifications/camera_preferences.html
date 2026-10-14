@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Notifications · {{ camera.nom }}{% endblock %}
+{% block content %}
+<p><a href="{% url 'camera-detail' camera.pk %}">Retour à la caméra</a></p>
+<div class="page-heading">
+  <div><p class="eyebrow">{{ camera.maison.nom }} · {{ camera.nom }}</p><h1>Mes notifications</h1></div>
+</div>
+<form method="post">
+  {% csrf_token %}
+  {{ form.non_field_errors }}
+  <fieldset>
+    <legend>Notifications push sur mes appareils</legend>
+    {% for field in form %}
+      <p><label for="{{ field.id_for_label }}">{{ field }} {{ field.label }}</label>{{ field.errors }}</p>
+    {% endfor %}
+  </fieldset>
+  <p>Une catégorie désactivée reste muette même pour une alerte urgente.</p>
+  <p>Fuseau horaire : {{ camera.maison.fuseau_horaire }}. Les alertes silencieuses restent dans l’historique, sans envoi différé.</p>
+  <button type="submit" class="button">Enregistrer</button>
+</form>
+{% endblock %}

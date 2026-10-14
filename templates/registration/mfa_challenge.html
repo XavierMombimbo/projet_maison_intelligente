@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}Vérification MFA{% endblock %}
+{% block content %}
+<div class="auth-shell">
+  <div class="auth-context"><p class="eyebrow">Deuxième étape</p><h1>Confirmez votre identité.</h1><p class="lead">{% if email_sent %}Un code temporaire a été envoyé à {{ masked_email }}.{% elif email_delivery_configured %}L’envoi à {{ masked_email }} a échoué; vous pouvez le relancer.{% else %}L’envoi e-mail attend la configuration SMTP locale.{% endif %} Vous pouvez aussi utiliser votre application ou un code de récupération.</p></div>
+  <section class="auth-card" aria-labelledby="mfa-title">
+    <p class="eyebrow">Accès protégé</p><h2 id="mfa-title">Code d’authentification</h2>
+    <form method="post" novalidate>{% csrf_token %}{{ form.as_p }}<button class="button" type="submit">Vérifier</button></form>
+    <form method="post" action="{% url 'mfa-email-code' %}">{% csrf_token %}<button class="button button-secondary" type="submit">Renvoyer un code par e-mail</button></form>
+  </section>
+</div>
+{% endblock %}

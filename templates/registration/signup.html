@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+{% block title %}Inscription{% endblock %}
+{% block content %}
+<div class="auth-shell">
+  <div class="auth-context"><p class="eyebrow">Installation rapide</p><h1>Votre centre de surveillance en quelques minutes.</h1><p class="lead">Créez votre compte propriétaire, ajoutez une maison puis transformez un ordinateur en caméra.</p></div>
+  <section class="auth-card" aria-labelledby="signup-title"><p class="eyebrow">Nouveau propriétaire</p><h2 id="signup-title">Créer un compte</h2><form method="post" novalidate>{% csrf_token %}{{ form.as_p }}<button class="button" type="submit">Créer mon compte</button></form><p class="muted">Déjà inscrit ? <a class="text-link" href="{% url 'login' %}">Se connecter</a></p></section>
+</div>
+{% endblock %}

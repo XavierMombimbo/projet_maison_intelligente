@@ -1,0 +1,15 @@
+.pairing-panel { max-width: 760px; margin: 3vh auto; padding: 44px; text-align: center; background: #fff; border: 1px solid var(--line); border-radius: 24px; box-shadow: var(--shadow-lg); }
+.pairing-panel h1 { margin-bottom: 16px; font-size: clamp(2rem, 5vw, 3rem); }
+.pairing-panel .lead { margin-right: auto; margin-left: auto; }
+.pairing-code { margin: 32px 0 24px; padding: 24px 20px; color: var(--navy); background: var(--panel-soft); border: 1px dashed var(--line-strong); border-radius: 16px; font: 850 clamp(2.8rem, 10vw, 5.5rem)/1 ui-monospace, SFMono-Regular, Consolas, monospace; letter-spacing: .12em; font-variant-numeric: tabular-nums; }
+.countdown { width: fit-content; margin: 0 auto 22px; padding: 7px 12px; display: flex; align-items: center; gap: 8px; color: var(--brand-dark); background: var(--brand-light); border-radius: 999px; font-size: .86rem; font-weight: 750; }
+.pairing-panel .notice { text-align: left; }
+.pairing-panel .button.secondary { margin: 6px 0 0; }
+.pairing-input { text-align: center; font: 800 1.7rem/1 ui-monospace, SFMono-Regular, Consolas, monospace !important; letter-spacing: .2em; font-variant-numeric: tabular-nums; }
+.pairing-connect { max-width: 520px; }
+.pairing-connect > .button { width: 100%; }
+.house-card { position: relative; }
+.house-card h2 a::after { content: ""; position: absolute; inset: 0; }
+.house-card:hover { transform: translateY(-2px); }
+.house-card .camera-icon, .house-card p { position: relative; z-index: 1; pointer-events: none; }
+@media (max-width: 600px) { .pairing-panel { padding: 30px 18px; } .pairing-code { letter-spacing: .06em; } }

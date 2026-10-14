@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}Code d’appairage{% endblock %}
+{% block content %}
+<section class="pairing-panel">
+  <p class="eyebrow">Code temporaire</p>
+  <h1>Connecter « {{ camera.nom }} »</h1>
+  <p class="lead">Sur l’ordinateur qui servira de caméra, ouvrez la page <strong>Connecter une caméra</strong> et saisissez ce code.</p>
+  <div class="pairing-code" aria-label="Code {{ plain_code }}">{{ plain_code }}</div>
+  <p class="countdown"><span class="status-dot"></span> Expire à {{ pairing_code.date_expiration|date:"H:i:s" }} · utilisation unique</p>
+  <div class="notice">Ne partagez ce code qu’avec la personne qui configure cet ordinateur-caméra. Cette page n’est pas mise en cache.</div>
+  <a class="button secondary" href="{% url 'camera-detail' camera.pk %}">Retour à la caméra</a>
+</section>
+{% endblock %}

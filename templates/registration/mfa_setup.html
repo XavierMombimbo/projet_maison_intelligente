@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Authentification multifacteur{% endblock %}
+{% block content %}
+<div class="auth-shell">
+  <div class="auth-context"><p class="eyebrow">Sécurité du compte</p><h1>Authentification multifacteur</h1><p class="lead">Un code temporaire protège votre compte même si votre mot de passe est compromis.</p></div>
+  <section class="auth-card">
+    {% if device.is_confirmed %}
+      <p class="eyebrow">Protection active</p><h2>MFA activée</h2><p class="notice">Votre compte demande désormais un code TOTP après le mot de passe.</p>
+      {% if recovery_codes %}<div class="notice warning"><strong>Enregistrez ces codes maintenant.</strong><p>Ils ne seront plus affichés. Chaque code ne fonctionne qu’une fois.</p><ul class="recovery-codes">{% for code in recovery_codes %}<li><code>{{ code }}</code></li>{% endfor %}</ul></div>{% endif %}
+      <div class="action-stack"><a class="button secondary" href="{% url 'mfa-replace' %}">Remplacer l’application</a><a class="button secondary" href="{% url 'mfa-revoke-sessions' %}">Révoquer les autres sessions</a><a class="button secondary" href="{% url 'mobile-api-test' %}">Tester la connexion mobile</a></div>
+    {% else %}
+      <p class="eyebrow">Configuration</p><h2>Scanner puis confirmer</h2>
+      <img class="mfa-qr" src="{% url 'mfa-qr' %}" alt="QR code à scanner avec une application d’authentification">
+      <p class="muted">Scannez ce QR code avec votre application d’authentification, puis saisissez le code affiché. La MFA ne sera active qu’après confirmation.</p>
+      <form method="post" novalidate>{% csrf_token %}{{ form.as_p }}<button class="button" type="submit">Activer la MFA</button></form>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}
