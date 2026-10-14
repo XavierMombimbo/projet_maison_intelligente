@@ -1,6 +1,7 @@
 import argparse
 import getpass
 import os
+import time
 from pathlib import Path
 from uuid import UUID
 
@@ -8,6 +9,25 @@ from .client import GatewayAPIClient, GatewayAPIError
 from .credentials import CredentialStoreError, load_credentials, save_credentials
 from .rtsp import RTSPError
 from .runner import run_gateway
+
+
+def _capture_face_embedding(reader, embedder):
+    """Let an opened webcam settle, then use the first acceptable live frame.
+
+    Frames stay in memory only.  Retrying avoids treating an auto-exposure
+    startup frame as a failed voluntary enrolment.
+    """
+    from .facial import FaceQualityError
+
+    time.sleep(1)
+    last_error = None
+    for _ in range(5):
+        try:
+            return embedder.embedding_from_bgr(reader.read())
+        except FaceQualityError as exc:
+            last_error = exc
+            time.sleep(0.25)
+    raise last_error
 
 
 def build_parser():
@@ -78,7 +98,7 @@ def main(argv=None):
             try:
                 require_arcface_academic_approval(args.model_root)
                 reader.open()
-                template = ArcFaceEmbedder.from_model_root(args.model_root).embedding_from_bgr(reader.read())
+                template = _capture_face_embedding(reader, ArcFaceEmbedder.from_model_root(args.model_root))
             except (FaceRecognitionError, ModelApprovalError, WebcamError) as exc:
                 print(f"Erreur : {exc}")
                 return 1
@@ -114,7 +134,7 @@ def main(argv=None):
                 synchronize_biometric_profiles(client, token, store=cache)
                 profiles = cache.profiles_for_comparison()
                 reader.open()
-                query = ArcFaceEmbedder.from_model_root(args.model_root).embedding_from_bgr(reader.read())
+                query = _capture_face_embedding(reader, ArcFaceEmbedder.from_model_root(args.model_root))
                 result = compare_embedding(query, profiles, threshold=args.threshold)
             except (BiometricCacheError, FaceRecognitionError, ModelApprovalError, WebcamError) as exc:
                 print(f"Erreur : {exc}")
