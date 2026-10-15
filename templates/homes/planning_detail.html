@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% load tz %}
+{% block title %}Planning — {{ maison.nom }}{% endblock %}
+{% block content %}
+<p class="eyebrow">{{ maison.nom }}</p>
+<div class="page-heading">
+  <div><h1>Activation automatique</h1><p>Choisissez simplement l’heure de démarrage et l’heure d’arrêt de la surveillance.</p></div>
+</div>
+
+<section class="detail-grid">
+  <article class="card">
+    <h2>Horaires quotidiens</h2>
+    {% if est_proprietaire %}
+      <form method="post" action="{% url 'schedule-daily-update' maison.pk %}">{% csrf_token %}{{ planning_quotidien_form.as_p }}<button class="button" type="submit">Enregistrer les horaires</button></form>
+    {% elif planning_quotidien %}
+      <p>Activation à <strong>{{ planning_quotidien.heure_debut|time:"H:i" }}</strong> et arrêt à <strong>{{ planning_quotidien.heure_fin|time:"H:i" }}</strong>.</p>
+    {% else %}<p>Aucun horaire automatique.</p>{% endif %}
+    {% if planning_quotidien and planning_quotidien.heure_debut > planning_quotidien.heure_fin %}<p class="muted">L’arrêt a lieu le lendemain.</p>{% endif %}
+  </article>
+  <article class="card">
+    <h2>Décision actuelle</h2>
+    <p><span class="status-pill {% if decision.active %}confirmed{% else %}false_alarm{% endif %}">{% if decision.active %}Surveillance demandée{% else %}Surveillance arrêtée{% endif %}</span></p>
+    <dl><dt>Règle appliquée</dt><dd>{{ decision.libelle }}</dd><dt>Priorité</dt><dd>{{ decision.source }}</dd></dl>
+  </article>
+</section>
+
+<details>
+  <summary>Options avancées</summary>
+  <section>
+    <div class="section-heading"><h2>Fuseau horaire</h2></div>
+    {% if est_proprietaire %}<form class="card" method="post" action="{% url 'planning-timezone-update' maison.pk %}">{% csrf_token %}{{ fuseau_form.as_p }}<button class="button secondary" type="submit">Enregistrer</button></form>{% else %}<p>{{ maison.fuseau_horaire }}</p>{% endif %}
+  </section>
+<section>
+  <div class="section-heading"><h2>Priorité manuelle</h2></div>
+  {% if derogation %}{% timezone maison.fuseau_horaire %}<p>État forcé : <strong>{% if derogation.surveillance_active %}actif{% else %}inactif{% endif %}</strong> jusqu’au {{ derogation.expire_le|date:"d/m/Y H:i" }}.</p>{% endtimezone %}{% else %}<p class="empty">Aucune priorité manuelle active.</p>{% endif %}
+  {% if est_proprietaire %}<div class="detail-grid"><form class="card" method="post" action="{% url 'schedule-override-update' maison.pk %}">{% csrf_token %}{{ derogation_form.as_p }}<button class="button" type="submit">Appliquer</button></form>{% if derogation %}<form method="post" action="{% url 'schedule-override-delete' maison.pk %}">{% csrf_token %}<button class="button danger" type="submit">Annuler la priorité</button></form>{% endif %}</div>{% endif %}
+</section>
+
+<section>
+  <div class="section-heading"><h2>Plages particulières</h2>{% if est_proprietaire %}<a href="{% url 'schedule-window-create' maison.pk %}">Ajouter</a>{% endif %}</div>
+  <div class="table-wrap"><table><thead><tr><th>Nom</th><th>Jour</th><th>Début</th><th>Fin</th><th>État</th>{% if est_proprietaire %}<th>Actions</th>{% endif %}</tr></thead><tbody>
+  {% for plage in plages_avancees %}<tr><td>{{ plage.nom }}</td><td>{{ plage.get_jour_display }}</td><td>{{ plage.heure_debut|time:"H:i" }}</td><td>{{ plage.heure_fin|time:"H:i" }}{% if plage.heure_debut > plage.heure_fin %} (+1 jour){% endif %}</td><td>{% if plage.active %}Active{% else %}Suspendue{% endif %}</td>{% if est_proprietaire %}<td><a href="{% url 'schedule-window-update' maison.pk plage.pk %}">Modifier</a><form method="post" action="{% url 'schedule-window-delete' maison.pk plage.pk %}" data-confirm="Supprimer cette plage ?">{% csrf_token %}<button class="link-button" type="submit">Supprimer</button></form></td>{% endif %}</tr>{% empty %}<tr><td colspan="6">Aucune plage particulière.</td></tr>{% endfor %}
+  </tbody></table></div>
+</section>
+
+<section>
+  <div class="section-heading"><h2>Exceptions datées</h2>{% if est_proprietaire %}<a href="{% url 'schedule-exception-create' maison.pk %}">Ajouter</a>{% endif %}</div>
+  {% timezone maison.fuseau_horaire %}<div class="table-wrap"><table><thead><tr><th>Nom</th><th>Début</th><th>Fin</th><th>Décision</th><th>Priorité</th>{% if est_proprietaire %}<th>Actions</th>{% endif %}</tr></thead><tbody>
+  {% for exception in maison.exceptions_surveillance.all %}<tr><td>{{ exception.nom }}</td><td>{{ exception.date_debut|date:"d/m/Y H:i" }}</td><td>{{ exception.date_fin|date:"d/m/Y H:i" }}</td><td>{% if exception.surveillance_active %}Activer{% else %}Désactiver{% endif %}</td><td>{{ exception.priorite }}</td>{% if est_proprietaire %}<td><a href="{% url 'schedule-exception-update' maison.pk exception.pk %}">Modifier</a><form method="post" action="{% url 'schedule-exception-delete' maison.pk exception.pk %}" data-confirm="Supprimer cette exception ?">{% csrf_token %}<button class="link-button" type="submit">Supprimer</button></form></td>{% endif %}</tr>{% empty %}<tr><td colspan="6">Aucune exception.</td></tr>{% endfor %}
+  </tbody></table></div>{% endtimezone %}
+</section>
+</details>
+{% endblock %}

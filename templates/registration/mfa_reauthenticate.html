@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+{% block title %}Révoquer les sessions{% endblock %}
+{% block content %}
+<div class="auth-shell">
+  <div class="auth-context"><p class="eyebrow">Sécurité du compte</p><h1>Révoquer les autres sessions</h1><p class="lead">Tous les autres navigateurs seront déconnectés. Cette session restera active.</p></div>
+  <section class="auth-card"><h2>Réauthentification</h2><form method="post" novalidate>{% csrf_token %}{{ form.as_p }}<button class="button danger" type="submit">Révoquer les autres sessions</button></form></section>
+</div>
+{% endblock %}

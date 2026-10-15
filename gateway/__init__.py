@@ -1,0 +1,2 @@
+"""Passerelle locale Sentinelle Maison."""
+

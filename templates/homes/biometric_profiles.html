@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}Profils volontaires — {{ maison.nom }}{% endblock %}
+{% block content %}
+<div class="page-heading">
+  <div>
+    <p class="eyebrow">Données sensibles</p>
+    <h1>Profils volontaires</h1>
+    <p>{{ maison.nom }} · Chaque personne crée et retire son propre profil.</p>
+  </div>
+  <a class="button secondary" href="{% url 'maison-detail' maison.pk %}">Retour à la maison</a>
+</div>
+
+<section>
+  <div class="section-heading"><h2>Profils visibles</h2></div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Profil</th><th>État</th><th>Consentement</th><th>Actions</th></tr></thead>
+      <tbody>
+        {% for profil in profils %}
+          <tr>
+            <td><strong>{{ profil.libelle }}</strong>{% if maison.proprietaire == user %}<br><small>{{ profil.utilisateur.username }}</small>{% endif %}</td>
+            <td>{% if profil.statut == 'revoked' %}Retiré{% elif profil.est_enrole %}Enrôlé{% else %}En attente d’enrôlement{% endif %}</td>
+            <td>{{ profil.date_consentement|date:"d/m/Y H:i" }}</td>
+            <td>
+              {% if profil.utilisateur == user %}<a href="{% url 'biometric-profile-export' maison.pk profil.pk %}">Exporter mes données</a>{% endif %}
+              {% if profil.statut != 'revoked' and profil.utilisateur == user or profil.statut != 'revoked' and maison.proprietaire == user %}
+                <form method="post" action="{% url 'biometric-profile-revoke' maison.pk profil.pk %}" class="inline-form">{% csrf_token %}<button type="submit" class="link-button" data-confirm="Retirer ce profil et effacer immédiatement son gabarit ?">Retirer</button></form>
+              {% endif %}
+            </td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="4">Aucun profil volontaire dans cette maison.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+{% if peut_creer %}
+<section class="biometric-consent-form">
+  <p class="eyebrow">Consentement</p>
+  <h2>Créer mon profil</h2>
+  <p>Cette étape enregistre votre accord. Le visage ne sera enrôlé qu’à l’étape technique suivante.</p>
+  <form method="post" novalidate>
+    {% csrf_token %}
+    {{ form.non_field_errors }}
+    <div class="biometric-field">
+      <label for="{{ form.libelle.id_for_label }}">{{ form.libelle.label }}</label>
+      {{ form.libelle }}
+      {% if form.libelle.help_text %}<small>{{ form.libelle.help_text }}</small>{% endif %}
+      {{ form.libelle.errors }}
+    </div>
+    <div class="biometric-consent-check">
+      {{ form.consentement }}
+      <label for="{{ form.consentement.id_for_label }}">{{ form.consentement.label }}</label>
+    </div>
+    {{ form.consentement.errors }}
+    <button class="button" type="submit">Créer mon profil volontaire</button>
+  </form>
+</section>
+{% endif %}
+{% endblock %}

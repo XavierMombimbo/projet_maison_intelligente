@@ -1,0 +1,3 @@
+{% extends "base.html" %}
+{% block title %}Caméras{% endblock %}
+{% block content %}<div class="page-heading"><div><p class="eyebrow">Périmètre autorisé</p><h1>Mes caméras</h1><p>Gérez les appareils visibles et leur état de surveillance.</p></div><a class="button" href="{% url 'camera-create' %}">Ajouter une caméra</a></div><div class="grid">{% for camera in cameras %}{% include "homes/_camera_card.html" %}{% empty %}<div class="empty"><h3>Aucune caméra visible</h3><p>Ajoutez une caméra pour commencer la surveillance.</p><a class="button small" href="{% url 'camera-create' %}">Ajouter une caméra</a></div>{% endfor %}</div>{% endblock %}

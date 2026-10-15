@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Test de la connexion mobile{% endblock %}
+{% block content %}
+<div class="auth-shell">
+  <div class="auth-context">
+    <p class="eyebrow">API mobile · étape 1</p>
+    <h1>Tester la connexion mobile</h1>
+    <p class="lead">Ce diagnostic vérifie le mot de passe, le code MFA reçu par e-mail et l’accès aux données autorisées.</p>
+  </div>
+  <section
+    class="auth-card"
+    id="mobile-api-test"
+    data-login-url="{% url 'mobile-api:login' %}"
+    data-mfa-url="{% url 'mobile-api:mfa-verify' %}"
+    data-refresh-url="{% url 'mobile-api:refresh' %}"
+    data-me-url="{% url 'mobile-api:me' %}"
+    data-sessions-url="{% url 'mobile-api:session-list' %}"
+    data-session-base="/api/v1/auth/sessions/"
+    data-houses-url="{% url 'mobile-api:house-list' %}"
+    data-cameras-url="{% url 'mobile-api:camera-list' %}"
+    data-events-url="{% url 'mobile-api:event-list' %}"
+  >
+    <div id="mobile-login-step">
+      <p class="eyebrow">1 · Mot de passe</p>
+      <label for="mobile-identifier">Adresse e-mail</label>
+      <input id="mobile-identifier" type="email" value="{{ request.user.email }}" autocomplete="username">
+      <label for="mobile-password">Mot de passe</label>
+      <input id="mobile-password" type="password" autocomplete="current-password">
+      <label for="mobile-device-name">Nom de cet appareil</label>
+      <input id="mobile-device-name" type="text" value="Navigateur de test" maxlength="120">
+      <button class="button" id="mobile-login-button" type="button">Envoyer le code MFA</button>
+    </div>
+
+    <div id="mobile-mfa-step" hidden>
+      <p class="eyebrow">2 · Code reçu</p>
+      <p class="notice" id="mobile-email-status"></p>
+      <label for="mobile-code">Code MFA</label>
+      <input id="mobile-code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="32">
+      <button class="button" id="mobile-mfa-button" type="button">Valider et ouvrir la session</button>
+    </div>
+
+    <div id="mobile-success-step" hidden>
+      <p class="eyebrow">3 · Résultat</p>
+      <h2>Session mobile active</h2>
+      <p class="notice" id="mobile-data-summary"></p>
+      <div class="action-stack">
+        <button class="button secondary" id="mobile-refresh-button" type="button">Tester le renouvellement</button>
+        <button class="button danger" id="mobile-revoke-button" type="button">Révoquer cette session de test</button>
+      </div>
+    </div>
+    <p class="message" id="mobile-test-status" role="status" hidden></p>
+  </section>
+</div>
+{% endblock %}
+{% block extra_scripts %}<script src="{% static 'js/mobile-api-test.js' %}?v=20260926-api1" defer></script>{% endblock %}

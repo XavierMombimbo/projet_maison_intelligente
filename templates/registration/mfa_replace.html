@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}Remplacer le facteur MFA{% endblock %}
+{% block content %}
+<div class="auth-shell">
+  <div class="auth-context"><p class="eyebrow">Sécurité du compte</p><h1>Remplacer l’application MFA</h1><p class="lead">Le facteur actuel reste actif jusqu’à la confirmation du nouveau QR.</p></div>
+  <section class="auth-card">
+    {% if device.pending_encrypted_secret %}
+      <h2>Confirmer le nouveau facteur</h2><img class="mfa-qr" src="{% url 'mfa-replace-qr' %}" alt="Nouveau QR code MFA"><form method="post" novalidate>{% csrf_token %}<input type="hidden" name="stage" value="confirm">{{ form.as_p }}<button class="button" type="submit">Confirmer le remplacement</button></form>
+    {% else %}
+      <h2>Réauthentification</h2><p class="muted">Saisissez votre mot de passe et votre facteur actuel. Un code de récupération convient si le téléphone est perdu.</p><form method="post" novalidate>{% csrf_token %}<input type="hidden" name="stage" value="start">{{ form.as_p }}<button class="button" type="submit">Continuer</button></form>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}

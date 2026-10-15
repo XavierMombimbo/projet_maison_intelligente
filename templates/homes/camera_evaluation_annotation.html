@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}Annoter la campagne — {{ camera.nom }}{% endblock %}
+{% block content %}
+<p class="eyebrow">AI-004 · {{ campagne.get_partition_display }}</p>
+<div class="page-heading">
+  <div><h1>Annoter la campagne</h1><p>{{ camera.nom }} · {{ campagne.get_condition_display }} · {{ campagne.duree_secondes|floatformat:0 }} s</p></div>
+  <a class="button secondary" href="{% url 'camera-evaluation' camera.pk %}">Retour au rapport</a>
+</div>
+
+<section class="card">
+  <h2>Comment compter</h2>
+  <p><strong>Attendues</strong> : objets réellement présents. <strong>Correctes</strong> : objets attendus reconnus par l’IA. <strong>Fausses</strong> : objets annoncés par l’IA alors qu’ils n’étaient pas présents.</p>
+  <form method="post" novalidate>{% csrf_token %}
+    {{ form.non_field_errors }}
+    <div class="table-wrap evaluation-table">
+      <table>
+        <thead><tr><th>Classe</th><th>Attendues</th><th>Correctes</th><th>Fausses</th></tr></thead>
+        <tbody>
+        {% for row in annotation_rows %}
+          <tr>
+            <td><strong>{{ row.label }}</strong></td>
+            <td>{{ row.expected }}{{ row.expected.errors }}</td>
+            <td>{{ row.correct }}{{ row.correct.errors }}</td>
+            <td>{{ row.false }}{{ row.false.errors }}</td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div class="performance-fields">
+      <p><strong>Mesures du navigateur</strong><br><span class="helptext">Pendant une future campagne, relevez ces valeurs dans le gestionnaire des tâches de Chrome (Maj+Échap).</span></p>
+      <p>{{ form.cpu_moyen_pourcent.label_tag }}{{ form.cpu_moyen_pourcent }}{{ form.cpu_moyen_pourcent.help_text }}{{ form.cpu_moyen_pourcent.errors }}</p>
+      <p>{{ form.ram_pic_mo.label_tag }}{{ form.ram_pic_mo }}{{ form.ram_pic_mo.help_text }}{{ form.ram_pic_mo.errors }}</p>
+    </div>
+    <button class="button" type="submit">Enregistrer et calculer</button>
+  </form>
+</section>
+
+<section class="events-section">
+  <div class="section-heading"><h2>Événements observés pendant la campagne</h2></div>
+  <div class="event-list">
+  {% for evenement in evenements %}
+    <a class="event-row" href="{% url 'event-detail' evenement.pk %}">
+      <strong>{{ evenement.horodatage_observation|date:"d/m/Y H:i:s" }}</strong>
+      <span>{% for objet in evenement.objets.all %}{{ objet.classe }}{% if not forloop.last %}, {% endif %}{% empty %}Aucun objet détaillé{% endfor %}</span>
+      <span>{{ evenement.nom_modele }} {{ evenement.version_modele }}</span>
+      <span>Voir la capture</span>
+    </a>
+  {% empty %}<div class="empty">Aucun événement réel pendant cette campagne. Les objets manqués peuvent tout de même être inscrits dans « Attendues ».</div>{% endfor %}
+  </div>
+</section>
+{% endblock %}

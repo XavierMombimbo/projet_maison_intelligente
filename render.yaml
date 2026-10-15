@@ -1,0 +1,100 @@
+services:
+  - type: web
+    name: sentinelle-maison
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt && bash build.sh
+    startCommand: daphne -b 0.0.0.0 -p $PORT config.asgi:application
+    healthCheckPath: /health/
+    envVars:
+      - key: DJANGO_DEBUG
+        value: "False"
+      - key: DJANGO_SECURE_SSL_REDIRECT
+        value: "True"
+      - key: DJANGO_SECURE_COOKIES
+        value: "True"
+      - key: DJANGO_ALLOWED_HOSTS
+        sync: false
+      - key: DJANGO_CSRF_TRUSTED_ORIGINS
+        sync: false
+      - key: DJANGO_SECRET_KEY
+        generateValue: true
+      - key: MOBILE_JWT_SECRET
+        generateValue: true
+      - key: MOBILE_CHALLENGE_PEPPER
+        generateValue: true
+      - key: MOBILE_REFRESH_PEPPER
+        generateValue: true
+      - key: PAIRING_CODE_PEPPER
+        generateValue: true
+      - key: CAMERA_CREDENTIAL_PEPPER
+        generateValue: true
+      - key: CAMERA_JWT_SECRET
+        generateValue: true
+      - key: AUDIT_LOG_PEPPER
+        generateValue: true
+      - key: CAPTURE_ENCRYPTION_KEY
+        sync: false
+      - key: BACKUP_ENCRYPTION_KEY
+        sync: false
+      - key: CAMERA_SOURCE_ENCRYPTION_KEY
+        sync: false
+      - key: EVENT_SIGNING_ENCRYPTION_KEY
+        sync: false
+      - key: MFA_ENCRYPTION_KEY
+        sync: false
+      - key: PUSH_TOKEN_ENCRYPTION_KEY
+        sync: false
+      - key: PUSH_TOKEN_PEPPER
+        generateValue: true
+      - key: BIOMETRIC_ENCRYPTION_KEY
+        sync: false
+      - key: BIOMETRIC_CACHE_TTL_SECONDS
+        value: "300"
+      - key: BIOMETRIC_TEMPLATE_MAX_BYTES
+        value: "65536"
+      - key: FCM_ENABLED
+        value: "False"
+      - key: FCM_PROJECT_ID
+        sync: false
+      - key: FCM_SERVICE_ACCOUNT_JSON
+        sync: false
+      - key: RECOVERY_CODE_PEPPER
+        generateValue: true
+      - key: EMAIL_OTP_PEPPER
+        generateValue: true
+      - key: EMAIL_BACKEND
+        value: django.core.mail.backends.smtp.EmailBackend
+      - key: EMAIL_HOST
+        sync: false
+      - key: EMAIL_PORT
+        value: "587"
+      - key: EMAIL_HOST_USER
+        sync: false
+      - key: EMAIL_HOST_PASSWORD
+        sync: false
+      - key: EMAIL_USE_TLS
+        value: "True"
+      - key: DEFAULT_FROM_EMAIL
+        sync: false
+      - key: CHANNEL_ENCRYPTION_KEY
+        sync: false
+      - key: DATABASE_URL
+        fromDatabase:
+          name: sentinelle-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          type: keyvalue
+          name: sentinelle-redis
+          property: connectionString
+  - type: keyvalue
+    name: sentinelle-redis
+    plan: free
+    ipAllowList: []
+
+databases:
+  - name: sentinelle-db
+    databaseName: sentinelle
+    user: sentinelle
+    plan: free

@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block title %}Évaluation terrain — {{ camera.nom }}{% endblock %}
+{% block content %}
+<p class="eyebrow">AI-004 · {{ camera.maison.nom }}</p>
+<div class="page-heading">
+  <div><h1>Évaluation terrain — {{ camera.nom }}</h1><p>Séparez les scènes utilisées pour ajuster les seuils de celles réservées à l’évaluation indépendante.</p></div>
+  <a class="button secondary" href="{% url 'camera-detail' camera.pk %}">Retour à la caméra</a>
+</div>
+
+{% if campagne_active %}
+<section class="card">
+  <p class="eyebrow">Campagne active</p>
+  <h2>{{ campagne_active.get_partition_display }}</h2>
+  <dl>
+    <dt>Condition</dt><dd>{{ campagne_active.get_condition_display }}</dd>
+    <dt>Début</dt><dd>{{ campagne_active.date_debut|date:"d/m/Y à H:i:s" }}</dd>
+    <dt>Durée actuelle</dt><dd>{{ campagne_active.duree_secondes|floatformat:0 }} s</dd>
+    <dt>Événements réels</dt><dd>{{ campagne_active.nombre_evenements }}</dd>
+    {% if campagne_active.notes %}<dt>Note</dt><dd>{{ campagne_active.notes }}</dd>{% endif %}
+  </dl>
+  <p><strong>Caméra mesurée :</strong> {{ camera.nom }}</p>
+  <a class="button secondary" href="{% url 'camera-monitor' %}?camera={{ camera.pk }}">Ouvrir le mode caméra pour {{ camera.nom }}</a>
+  <form method="post" action="{% url 'camera-evaluation-stop' camera.pk campagne_active.pk %}">{% csrf_token %}<button class="button danger" type="submit">Arrêter et enregistrer</button></form>
+</section>
+{% else %}
+<section class="auth-card">
+  <p class="eyebrow">Nouvelle mesure réelle</p>
+  <h2>Démarrer une campagne</h2>
+  <form method="post" action="{% url 'camera-evaluation-start' camera.pk %}" novalidate>{% csrf_token %}{{ form.as_p }}<button class="button" type="submit">Démarrer la mesure</button></form>
+</section>
+{% endif %}
+
+<section class="events-section">
+  <div class="section-heading"><h2>Campagnes terminées</h2></div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Partition</th><th>Condition</th><th>Durée</th><th>Événements</th><th>Annotation</th></tr></thead>
+      <tbody>
+      {% for campagne in campagnes_terminees %}
+        <tr>
+          <td>{{ campagne.get_partition_display }}</td>
+          <td>{{ campagne.get_condition_display }}</td>
+          <td>{{ campagne.duree_secondes|floatformat:0 }} s</td>
+          <td>{{ campagne.nombre_evenements }}</td>
+          <td><a class="button small secondary" href="{% url 'camera-evaluation-annotation' camera.pk campagne.pk %}">{% if campagne.annotation_complete %}Modifier{% else %}Annoter{% endif %}</a></td>
+        </tr>
+      {% empty %}<tr><td colspan="5">Aucune campagne terminée.</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="events-section">
+  <div class="section-heading"><div><p class="eyebrow">Mesures séparées</p><h2>Précision et rappel par classe</h2></div></div>
+  <p>Les résultats d’ajustement et d’évaluation indépendante ne sont jamais mélangés.</p>
+  <div class="evaluation-reports">
+  {% for rapport in rapports %}
+    <article class="card">
+      <h3>{{ rapport.label }}</h3>
+      <div class="stats evaluation-stats">
+        <article><span>Heures annotées</span><strong>{{ rapport.duration_hours|floatformat:3 }} h</strong></article>
+        <article><span>Fausses alertes / h</span><strong>{% if rapport.false_alerts_per_hour is None %}—{% else %}{{ rapport.false_alerts_per_hour|floatformat:2 }}{% endif %}</strong></article>
+        <article><span>CPU moyen</span><strong>{% if rapport.cpu_average is None %}À mesurer{% else %}{{ rapport.cpu_average|floatformat:1 }} %{% endif %}</strong></article>
+        <article><span>RAM pic</span><strong>{% if rapport.ram_peak is None %}À mesurer{% else %}{{ rapport.ram_peak }} Mo{% endif %}</strong></article>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Classe</th><th>Attendues</th><th>Correctes</th><th>Fausses</th><th>Précision</th><th>Rappel</th></tr></thead>
+          <tbody>
+          {% for metric in rapport.metrics %}
+            <tr>
+              <td>{{ metric.label }}</td><td>{{ metric.expected }}</td><td>{{ metric.true_positives }}</td><td>{{ metric.false_positives }}</td>
+              <td>{% if metric.precision is None %}—{% else %}{{ metric.precision|floatformat:1 }} %{% endif %}</td>
+              <td>{% if metric.recall is None %}—{% else %}{{ metric.recall|floatformat:1 }} %{% endif %}</td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </article>
+  {% endfor %}
+  </div>
+</section>
+{% endblock %}

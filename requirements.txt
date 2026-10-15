@@ -1,0 +1,16 @@
+Django[argon2]==5.2.17
+djangorestframework==3.18.0
+channels==4.3.2
+daphne==4.2.3
+whitenoise==6.12.0
+dj-database-url==3.0.1
+psycopg[binary]==3.2.10
+python-dotenv==1.1.1
+PyJWT==2.13.0
+Pillow==12.3.0
+cryptography==50.0.1
+insightface==0.7.3
+onnxruntime==1.31.0
+qrcode==8.2
+channels-redis==4.3.0
+firebase-admin==7.7.0
