@@ -37,6 +37,14 @@ def read_configuration(path):
         raise StartupError('Chemin environnement invalide.')
     if config['mode'] == 'webcam' and not config['recipe'] and not config.get('release_receipt'):
         raise StartupError('Preuve de publication absente.')
+    face_root = config.get('face_model_root')
+    if face_root is not None:
+        if (not isinstance(face_root, str) or not Path(face_root).is_absolute()
+                or config.get('academic_use_acknowledged') is not True):
+            raise StartupError('Configuration ArcFace invalide.')
+        threshold = config.get('face_threshold', 0.45)
+        if not isinstance(threshold, (int, float)) or isinstance(threshold, bool) or not 0 < threshold <= 1:
+            raise StartupError('Seuil facial invalide.')
     return config
 
 
@@ -107,6 +115,10 @@ def launch(config, *, sleep=time.sleep):
                     allow_development_model=config['recipe'], output=output,
                     queue_factory=lambda camera_id: EncryptedEventQueue(camera_id, path=cache / 'events'),
                     schedule_cache_factory=lambda camera_id, key: EncryptedScheduleCache(camera_id, key, path=cache / 'schedules' / f'{camera_id}.schedule'),
+                    **({
+                        'face_model_root': Path(config['face_model_root']),
+                        'face_threshold': float(config.get('face_threshold', 0.45)),
+                    } if config.get('face_model_root') else {}),
                 )
             for attempt in range(6):
                 try:

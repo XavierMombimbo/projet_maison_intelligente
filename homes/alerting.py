@@ -13,6 +13,7 @@ class DecisionAlerte:
     priorite: int
     raison: str
     cle_regroupement: str
+    notification_supprimee: bool = False
 
 
 def _pistes(objects, rule_context):
@@ -57,13 +58,15 @@ def decider_alerte(camera, objects, rule_context):
         if item.get("face_status") in {"recognized", "unknown", "unavailable"}
     }
 
+    notification_supprimee = False
     if qualified_people and rule_type == "line_crossing":
         priority = NiveauAlerte.URGENTE
         reason = "Personne ayant franchi la ligne configurée."
     elif qualified_people:
         if face_statuses == {"recognized"}:
             priority = NiveauAlerte.NORMALE
-            reason = "Profil volontaire reconnu ; présence conservée pour vérification."
+            reason = "Profil volontaire reconnu ; présence conservée sans notification."
+            notification_supprimee = True
         elif "unknown" in face_statuses:
             priority = NiveauAlerte.ELEVEE
             reason = "Personne non reconnue détectée au-dessus du seuil configuré."
@@ -84,6 +87,7 @@ def decider_alerte(camera, objects, rule_context):
         priorite=priority,
         raison=reason,
         cle_regroupement=_cle_regroupement(camera, objects, rule_context),
+        notification_supprimee=notification_supprimee,
     )
 
 

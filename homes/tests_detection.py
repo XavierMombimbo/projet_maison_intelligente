@@ -210,6 +210,8 @@ class DetectionApiTests(TestCase):
         self.assertEqual(known_response.status_code, 201, known_response.content)
         known_event = Evenement.objects.get(pk=known_response.json()["event_id"])
         self.assertEqual(known_event.priorite_alerte, NiveauAlerte.NORMALE)
+        self.assertTrue(known_event.notification_supprimee)
+        self.assertTrue(known_event.metadonnees["alerte"]["notification_supprimee"])
         self.assertEqual(known_event.metadonnees["identite_locale"]["statuts"], ["recognized"])
         self.assertNotIn("profile", str(known_event.metadonnees).lower())
         self.client.force_login(self.owner)
@@ -224,6 +226,7 @@ class DetectionApiTests(TestCase):
         self.assertEqual(unknown_response.status_code, 201, unknown_response.content)
         unknown_event = Evenement.objects.get(pk=unknown_response.json()["event_id"])
         self.assertEqual(unknown_event.priorite_alerte, NiveauAlerte.ELEVEE)
+        self.assertFalse(unknown_event.notification_supprimee)
         self.assertIn("non reconnue", unknown_event.raison_priorite)
 
     def test_v3_face_status_is_rejected_for_v2_or_a_non_person(self):

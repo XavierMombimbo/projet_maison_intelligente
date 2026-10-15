@@ -218,7 +218,9 @@ def create_detection_event(
                 raison_priorite=alert_decision.raison,
                 cle_regroupement="" if delayed else alert_decision.cle_regroupement,
                 evenement_principal=principal_event,
-                notification_supprimee=principal_event is not None or delayed,
+                notification_supprimee=(
+                    principal_event is not None or delayed or alert_decision.notification_supprimee
+                ),
                 metadonnees={
                     "capture": image_metadata,
                     "analyse_locale": True,
@@ -237,6 +239,7 @@ def create_detection_event(
                         "raison": alert_decision.raison,
                         "regroupee": principal_event is not None,
                         "retardee": delayed,
+                        "notification_supprimee": alert_decision.notification_supprimee,
                     },
                 },
             )

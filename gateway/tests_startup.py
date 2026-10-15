@@ -82,6 +82,22 @@ class StartupTests(TestCase):
         path.write_text(json.dumps(config))
         with self.assertRaises(StartupError):
             read_configuration(path)
+
+    def test_arcface_startup_requires_explicit_acknowledgement_and_valid_threshold(self):
+        config = self.configuration()
+        config.update({'face_model_root': str(self.root / 'arcface'), 'face_threshold': 0.45})
+        path = self.root / 'config.json'
+        path.write_text(json.dumps(config))
+        with self.assertRaises(StartupError):
+            read_configuration(path)
+        config['academic_use_acknowledged'] = True
+        config['face_threshold'] = 1.1
+        path.write_text(json.dumps(config))
+        with self.assertRaises(StartupError):
+            read_configuration(path)
+        config['face_threshold'] = 0.45
+        path.write_text(json.dumps(config))
+        self.assertEqual(read_configuration(path)['face_model_root'], str(self.root / 'arcface'))
         config['recipe'] = True
         config['cache_root'] = '../outside'
         path.write_text(json.dumps(config))
@@ -109,6 +125,24 @@ class StartupTests(TestCase):
         schedule = options['schedule_cache_factory']('00000000-0000-0000-0000-000000000001', 'key')
         self.assertEqual(schedule.path.parent, Path(config['cache_root']) / 'schedules')
         self.assertEqual(json.loads(Path(config['status_file']).read_text())['state'], 'completed_recipe')
+
+    @patch('gateway.startup.load_credentials', return_value=object())
+    @patch('gateway.startup.watch_webcam', return_value=0)
+    @patch('gateway.startup.verify_release', return_value='a' * 40)
+    def test_permanent_startup_passes_reviewed_arcface_options(self, release, watch, credentials):
+        config = self.configuration()
+        receipt, _ = self.make_receipt()
+        config.update({
+            'recipe': False,
+            'release_receipt': str(receipt),
+            'face_model_root': str(self.root / 'arcface'),
+            'face_threshold': 0.52,
+            'academic_use_acknowledged': True,
+        })
+        self.assertEqual(launch(config), 0)
+        options = watch.call_args.kwargs
+        self.assertEqual(options['face_model_root'], self.root / 'arcface')
+        self.assertEqual(options['face_threshold'], 0.52)
 
     @patch('gateway.startup.load_credentials', return_value=object())
     @patch('gateway.startup.watch_webcam', side_effect=[GatewayAPIError('offline'), 0])
