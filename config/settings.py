@@ -276,6 +276,7 @@ TEMPLATES = [
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
                 "config.source_code.source_code",
+                "homes.browser_camera.browser_camera_template_context",
             ],
         },
     },

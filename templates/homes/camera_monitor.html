@@ -4,6 +4,8 @@
 {% block content %}
 <section class="monitor-shell" id="camera-monitor"
   data-requested-camera-id="{{ requested_camera_id }}"
+  data-browser-context="{{ browser_camera_context }}"
+  data-browser-context-url="{% url 'browser-camera-context' %}"
   data-state-url="{% url 'api-camera-state' %}"
   data-token-url="{% url 'api-camera-token' %}"
   data-heartbeat-url="{% url 'api-camera-heartbeat' %}"
@@ -58,5 +60,6 @@
 <script src="{% static 'vendor/tf-4.22.0.min.js' %}?v=20260902-runtime4"></script>
 <script src="{% static 'vendor/coco-ssd-2.2.3.min.js' %}?v=20260902-runtime4"></script>
 <script src="{% static 'js/event-contract-v2.js' %}?v=20260925-rules1"></script>
-<script src="{% static 'js/camera-monitor.js' %}?v=20260926-network1"></script>
+<script src="{% static 'js/browser-camera-store.js' %}?v=20261018-account1"></script>
+<script src="{% static 'js/camera-monitor.js' %}?v=20261018-account1"></script>
 {% endblock %}

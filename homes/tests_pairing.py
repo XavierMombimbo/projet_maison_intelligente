@@ -131,6 +131,7 @@ class PairingViewsAndApiTests(TestCase):
 
     def test_browser_pairing_page_consumes_code_and_is_not_cached(self):
         _, plain_code = create_pairing_code(self.camera)
+        self.client.force_login(self.owner)
 
         response = self.client.post(reverse("connect-camera"), {"code": plain_code})
 
@@ -138,6 +139,7 @@ class PairingViewsAndApiTests(TestCase):
         self.assertTrue(response.context["paired"])
         self.assertContains(response, "Appairage réussi")
         self.assertIn("no-store", response.headers["Cache-Control"])
+        self.assertEqual(set(response.context["device_credentials"]), {"cameraId"})
 
     def test_camera_can_renew_token_and_read_only_its_state(self):
         _, plain_code = create_pairing_code(self.camera)

@@ -38,7 +38,7 @@ def device_secret_matches(secret: str, expected_hash: str) -> bool:
     return hmac.compare_digest(hash_device_secret(secret), expected_hash)
 
 
-def issue_camera_token(camera: Camera, *, now=None, ttl_seconds: int | None = None) -> str:
+def issue_camera_token(camera: Camera, *, now=None, ttl_seconds: int | None = None, browser_session=None) -> str:
     now = now or timezone.now()
     ttl_seconds = ttl_seconds if ttl_seconds is not None else settings.CAMERA_TOKEN_TTL_SECONDS
     payload = {
@@ -52,6 +52,8 @@ def issue_camera_token(camera: Camera, *, now=None, ttl_seconds: int | None = No
         "exp": now + timedelta(seconds=ttl_seconds),
         "jti": uuid.uuid4().hex,
     }
+    if browser_session is not None:
+        payload["browser_session"] = browser_session
     return jwt.encode(payload, settings.CAMERA_JWT_SECRET, algorithm="HS256")
 
 

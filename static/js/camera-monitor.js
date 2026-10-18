@@ -1,59 +1,8 @@
 (() => {
   "use strict";
 
-  const DB_NAME = "sentinelle-camera";
-  const STORE_NAME = "credentials";
   const DETECTION_INTERVAL_MS = 350;
   const EVENT_COOLDOWN_MS = 15000;
-
-  const openDatabase = () => new Promise((resolve, reject) => {
-    const request = indexedDB.open(DB_NAME, 1);
-    request.onupgradeneeded = () => {
-      if (!request.result.objectStoreNames.contains(STORE_NAME)) {
-        request.result.createObjectStore(STORE_NAME, {keyPath: "cameraId"});
-      }
-    };
-    request.onsuccess = () => resolve(request.result);
-    request.onerror = () => reject(request.error);
-  });
-
-  const readCredentials = async (requestedCameraId = "") => {
-    const database = await openDatabase();
-    return new Promise((resolve, reject) => {
-      const store = database.transaction(STORE_NAME).objectStore(STORE_NAME);
-      const request = requestedCameraId ? store.get(requestedCameraId) : store.getAll();
-      request.onsuccess = () => {
-        if (requestedCameraId) {
-          resolve(request.result || null);
-          return;
-        }
-        const values = request.result || [];
-        values.sort((left, right) => (right.pairedAt || 0) - (left.pairedAt || 0));
-        resolve(values[0] || null);
-      };
-      request.onerror = () => reject(request.error);
-    });
-  };
-
-  const saveCredentials = async (credentials) => {
-    const database = await openDatabase();
-    return new Promise((resolve, reject) => {
-      const transaction = database.transaction(STORE_NAME, "readwrite");
-      transaction.objectStore(STORE_NAME).put(credentials);
-      transaction.oncomplete = resolve;
-      transaction.onerror = () => reject(transaction.error);
-    });
-  };
-
-  const deleteCredentials = async (cameraId) => {
-    const database = await openDatabase();
-    return new Promise((resolve, reject) => {
-      const transaction = database.transaction(STORE_NAME, "readwrite");
-      transaction.objectStore(STORE_NAME).delete(cameraId);
-      transaction.oncomplete = resolve;
-      transaction.onerror = () => reject(transaction.error);
-    });
-  };
 
   const tokenExpiresSoon = (token) => {
     try {
@@ -130,6 +79,8 @@
     const controlStatusDot = document.getElementById("control-status-dot");
 
     let credentials = null;
+    let invalidated = false;
+    startButton.disabled = true;
     let stream = null;
     let model = null;
     let running = false;
@@ -242,28 +193,29 @@
       const requestStartedAt = Date.now();
       let response = null;
       try {
-        response = await fetch(root.dataset.tokenUrl, {
-          method: "POST",
-          headers: {"Content-Type": "application/json"},
-          body: JSON.stringify({device_id: credentials.deviceId, device_secret: credentials.deviceSecret})
+        const url = new URL(root.dataset.browserContextUrl, window.location.origin);
+        url.searchParams.set("camera", credentials.cameraId);
+        response = await fetch(url, {
+          credentials: "same-origin", cache: "no-store",
+          headers: {"X-Sentinelle-Camera-Context": root.dataset.browserContext}
         });
       } catch (error) {
         throw new Error(networkErrorMessage(error));
       }
       synchronizeServerClock(response, requestStartedAt);
-      if (!response.ok) {
+      if (!response.ok || response.redirected || !response.headers.get("Content-Type")?.includes("application/json")) {
         const error = new Error(
-          response.status === 401
+          [401, 403, 404, 409].includes(response.status) || response.redirected
             ? "Identité caméra expirée ou révoquée. Appairez de nouveau cet appareil."
             : "Le serveur n’a pas pu renouveler l’identité caméra."
         );
-        error.code = response.status === 401 ? "INVALID_CREDENTIALS" : "TOKEN_RENEWAL_FAILED";
+        error.code = response.status === 429 ? "TOKEN_RENEWAL_FAILED" : "INVALID_CREDENTIALS";
         throw error;
       }
       const body = await response.json();
       credentials.accessToken = body.access_token;
       credentials.eventSigningKey = body.event_signing_key;
-      await saveCredentials(credentials);
+
       return credentials.accessToken;
     };
 
@@ -276,17 +228,24 @@
       const token = await validToken();
       const headers = new Headers(options.headers || {});
       headers.set("Authorization", `Bearer ${token}`);
+      headers.set("X-Sentinelle-Camera-Context", root.dataset.browserContext);
+      headers.set("X-CSRFToken", monitoringToggleForm.querySelector("[name=csrfmiddlewaretoken]").value);
       const requestStartedAt = Date.now();
       let response = null;
       try {
-        response = await fetch(url, {...options, headers});
+        response = await fetch(url, {...options, headers, credentials: "same-origin", cache: "no-store"});
       } catch (error) {
         throw new Error(networkErrorMessage(error));
       }
       synchronizeServerClock(response, requestStartedAt);
-      if (response.status === 401 && retry) {
+      if ([401, 403].includes(response.status) && retry) {
         await renewToken();
         return cameraFetch(url, options, false);
+      }
+      if ([401, 403].includes(response.status)) {
+        const error = new Error("Cette caméra n’est plus autorisée pour votre session.");
+        error.code = "INVALID_CREDENTIALS";
+        throw error;
       }
       return response;
     };
@@ -296,6 +255,8 @@
         const response = await cameraFetch(root.dataset.stateUrl);
         if (!response.ok) throw new Error("La caméra ne peut plus lire son état.");
         const state = await response.json();
+        if (!credentials || invalidated) return;
+        startButton.disabled = running;
         monitoringActive = state.monitoring_active;
         const nextAnalysisConfig = {
           zone: state.analysis?.zone || {x: 0, y: 0, width: 1, height: 1},
@@ -328,9 +289,7 @@
       } catch (error) {
         monitoringActive = false;
         if (error.code === "INVALID_CREDENTIALS" && credentials) {
-          await deleteCredentials(credentials.cameraId).catch(() => {});
-          credentials = null;
-          pairingLink.hidden = false;
+          invalidateSession();
         }
         setStatus(error.message, true);
         stopCamera();
@@ -614,13 +573,18 @@
     }
 
     startButton.addEventListener("click", async () => {
-      if (!credentials) return;
+      if (!credentials || invalidated) return;
       startButton.disabled = true;
       setStatus("Demande d’autorisation de la webcam…");
       try {
-        stream = await requestCameraStream();
+        await renewToken();
+        if (!credentials || invalidated) return;
+        const opened = await requestCameraStream();
+        if (!credentials || invalidated) { opened.getTracks().forEach(track => track.stop()); return; }
+        stream = opened;
         video.srcObject = stream;
         await video.play();
+        if (!credentials || invalidated) { stopCamera(); return; }
         running = true;
         cameraOff.hidden = true;
         liveIndicator.hidden = false;
@@ -639,29 +603,60 @@
         await heartbeat();
       } catch (error) {
         stopCamera();
-        setStatus(webcamErrorMessage(error), true);
+        if (error.code === "INVALID_CREDENTIALS") invalidateSession();
+        else setStatus(webcamErrorMessage(error), true);
       }
     });
 
+    function invalidateSession() {
+      invalidated = true;
+      credentials = null;
+      stopCamera();
+      if (stateTimer) clearInterval(stateTimer);
+      if (heartbeatTimer) clearInterval(heartbeatTimer);
+      monitoringActive = false;
+      monitoringToggleForm.hidden = true;
+      analysisSettingsLink.hidden = true;
+      document.getElementById("camera-title").textContent = "Mode caméra";
+      monitoringState.textContent = "Session à vérifier";
+      monitoringState.classList.remove("active");
+      analysisState.textContent = rulesState.textContent = lastEvent.textContent = "—";
+      setStatus("Le compte, la session ou les droits ont changé. Rechargez la page pour continuer.", true);
+    }
+    window.addEventListener("sentinelle:account-changed", invalidateSession);
+    window.addEventListener("pageshow", event => { if (event.persisted) invalidateSession(); });
+    window.addEventListener("pagehide", () => { stopCamera(); });
     stopButton.addEventListener("click", () => { stopCamera(); heartbeat(); setStatus("Webcam arrêtée immédiatement."); });
     window.addEventListener("beforeunload", stopCamera);
 
     try {
       const requestedCameraId = root.dataset.requestedCameraId || "";
-      credentials = await readCredentials(requestedCameraId);
+      const authorization = await fetch(root.dataset.browserContextUrl, {
+        credentials: "same-origin", cache: "no-store",
+        headers: {"X-Sentinelle-Camera-Context": root.dataset.browserContext}
+      });
+      if (!authorization.ok || authorization.redirected || !authorization.headers.get("Content-Type")?.includes("application/json")) {
+        invalidateSession(); return;
+      }
+      const permitted = await authorization.json();
+      credentials = await window.SentinelleBrowserCameraStore.read(permitted.camera_ids, requestedCameraId);
+      if (invalidated) { credentials = null; return; }
       if (!credentials) {
         startButton.disabled = true;
+        monitoringState.textContent = "Aucune caméra autorisée";
         pairingLink.hidden = false;
         setStatus(
           requestedCameraId
-            ? "Cette caméra n’est pas appairée dans ce navigateur. Appairez-la avant de lancer la mesure."
-            : "Aucune identité caméra dans ce navigateur.",
+            ? "Cette caméra n’est pas autorisée ou n’est pas appairée dans ce navigateur."
+            : "Aucune caméra appairée n’est autorisée pour ce compte dans ce navigateur.",
           true
         );
         return;
       }
-      setStatus("Identité caméra trouvée. La webcam attend votre autorisation.");
+      await renewToken();
       await refreshState();
+      if (!credentials || invalidated) return;
+      setStatus("Caméra autorisée pour votre compte. La webcam attend votre accord.");
       stateTimer = setInterval(refreshState, 5000);
       heartbeatTimer = setInterval(heartbeat, 30000);
     } catch (error) {

@@ -1,5 +1,31 @@
 # Webcam du PC sans navigateur
 
+## Isolation du mode caméra du navigateur
+
+Le mode web exige une connexion et contrôle les caméras autorisées du compte
+avant de sélectionner un appairage local. Une caméra visible sans droit de
+contrôle ne suffit pas. Chaque jeton du navigateur est lié à la session web,
+vérifiée à chaque requête ; perte de droits, déconnexion ou changement de
+compte invalident cet accès. Les POST conservent la protection CSRF et la
+signature des événements.
+
+Le navigateur conserve uniquement l'identifiant de caméra et la date
+d'appairage, jamais le secret appareil, le jeton ou la clé de signature.
+À la première lecture, les anciennes entrées sont expurgées de leurs secrets
+et filtrées selon les droits du compte. Les jetons courts et clés nécessaires
+restent en mémoire. Un ancien onglet est arrêté et son affichage effacé lors
+d'un changement de session, y compris depuis un autre onglet ; le serveur
+refuse aussi tout ancien jeton navigateur rejoué dans un autre compte.
+
+Le parcours d'appairage web exige un compte autorisé et ne consomme pas le
+code d'une caméra étrangère. L'API dédiée aux passerelles autonomes conserve
+son authentification appareil indépendante ; leurs identités DPAPI ne sont
+ni effacées ni révoquées par cette migration du navigateur. Les anciens jetons
+appareil sont refusés dans les requêtes de navigateur : le mode web obtient
+désormais son autorisation depuis la session connectée.
+
+## Service PC autonome
+
 Le mode `gateway webcam` capture la webcam locale avec OpenCV, execute
 YOLO11n dans le processus PC, applique la presence dans la zone configuree,
 envoie les evenements signes a l'API existante et publie un heartbeat d'analyse.

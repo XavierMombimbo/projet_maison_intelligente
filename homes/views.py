@@ -925,9 +925,14 @@ class PairingCodeCreateView(LoginRequiredMixin, View):
         return response
 
 
-class ConnectCameraView(FormView):
+class ConnectCameraView(LoginRequiredMixin, FormView):
     form_class = ConnectCameraForm
     template_name = "homes/connect_camera.html"
+
+    def dispatch(self, request, *args, **kwargs):
+        response = super().dispatch(request, *args, **kwargs)
+        patch_cache_control(response, no_store=True, private=True)
+        return response
 
     def post(self, request, *args, **kwargs):
         rate = check_rate_limit("pairing", request)
@@ -947,7 +952,7 @@ class ConnectCameraView(FormView):
 
     def form_valid(self, form):
         try:
-            credentials = consume_pairing_code(form.cleaned_data["code"])
+            credentials = consume_pairing_code(form.cleaned_data["code"], user=self.request.user)
         except PairingError as exc:
             record_audit("camera.pairing.failure", ResultatAudit.REFUS, request=self.request)
             form.add_error("code", str(exc))
@@ -965,10 +970,6 @@ class ConnectCameraView(FormView):
                 camera=credentials.camera,
                 device_credentials={
                     "cameraId": str(credentials.camera.pk),
-                    "deviceId": credentials.device_id,
-                    "deviceSecret": credentials.device_secret,
-                    "eventSigningKey": credentials.event_signing_key,
-                    "accessToken": credentials.access_token,
                 },
             )
         )
@@ -976,11 +977,18 @@ class ConnectCameraView(FormView):
         return response
 
 
-class CameraMonitorView(TemplateView):
+class CameraMonitorView(LoginRequiredMixin, TemplateView):
     template_name = "homes/camera_monitor.html"
+
+    def dispatch(self, request, *args, **kwargs):
+        response = super().dispatch(request, *args, **kwargs)
+        patch_cache_control(response, no_store=True, private=True)
+        return response
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        from .browser_camera import browser_camera_context
+        context["browser_camera_context"] = browser_camera_context(self.request)
         context["requested_camera_id"] = self.request.GET.get("camera", "")
         return context
 

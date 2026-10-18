@@ -84,7 +84,7 @@ def create_pairing_code(camera: Camera, *, now=None) -> tuple[CodeAppairage, str
     return pairing_code, plain_code
 
 
-def consume_pairing_code(code: str, *, now=None) -> PairingCredentials:
+def consume_pairing_code(code: str, *, now=None, user=None) -> PairingCredentials:
     now = now or timezone.now()
     normalized_code = code.strip()
     if not PAIRING_CODE_PATTERN.fullmatch(normalized_code):
@@ -100,6 +100,8 @@ def consume_pairing_code(code: str, *, now=None) -> PairingCredentials:
         )
         if pairing_code is None:
             raise PairingError("Code invalide ou expiré.")
+        if user is not None and not Camera.objects.controllable_by(user).filter(pk=pairing_code.camera_id).exists():
+            raise PairingError("Code invalide ou caméra non autorisée pour ce compte.")
 
         claimed = CodeAppairage.objects.filter(
             pk=pairing_code.pk, utilise=False, date_expiration__gt=now

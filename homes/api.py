@@ -53,6 +53,7 @@ class CameraClockMixin:
     def finalize_response(self, request, response, *args, **kwargs):
         response = super().finalize_response(request, response, *args, **kwargs)
         response["X-Sentinelle-Time"] = str(int(timezone.now().timestamp() * 1000))
+        response["Cache-Control"] = "no-store, private"
         return response
 
 
@@ -135,6 +136,9 @@ class CameraTokenAPIView(CameraClockMixin, APIView):
     permission_classes = [permissions.AllowAny]
 
     def post(self, request):
+        from .browser_camera import is_browser_camera_request
+        if is_browser_camera_request(request):
+            return Response({"detail": "Rechargez le mode caméra avec votre compte connecté."}, status=403)
         serializer = DeviceCredentialsSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         device_id = serializer.validated_data["device_id"]

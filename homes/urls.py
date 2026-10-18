@@ -1,6 +1,7 @@
 from django.urls import path
 from notifications.views import CameraPushPreferenceView
 from .facial_views import FacialEnrollmentView
+from .browser_camera import BrowserCameraContextView
 
 from .views import (
     CameraCreateView,
@@ -38,6 +39,7 @@ from .views import (
 )
 
 urlpatterns = [
+    path("camera-navigateur/contexte/", BrowserCameraContextView.as_view(), name="browser-camera-context"),
     path("", MaisonListView.as_view(), name="maison-list"),
     path("nouvelle/", MaisonCreateView.as_view(), name="maison-create"),
     path("<int:pk>/", MaisonDetailView.as_view(), name="maison-detail"),

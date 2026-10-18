@@ -901,6 +901,10 @@ class DetectionApiTests(TestCase):
 
 
 class CameraMonitorPageTests(TestCase):
+    def setUp(self):
+        user = User.objects.create_user("monitor-page", "monitor-page@example.test", "Secret!2026")
+        self.client.force_login(user)
+
     def test_page_requires_explicit_click_without_simulation(self):
         response = self.client.get(reverse("camera-monitor"))
 
