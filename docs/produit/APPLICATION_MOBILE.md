@@ -16,6 +16,13 @@ Recette : se connecter avec MFA, parcourir les cinq onglets, ouvrir le planning 
 
 ## Pilote Flutter
 
+Pour un nouveau compte, l'activation sur **Sécurité** propose désormais
+**Envoyer le code par e-mail**, puis **Activer la protection** après saisie
+du dernier code reçu. Le code expire après dix minutes par défaut ; un
+renvoi invalide le précédent. Enregistrer les codes de récupération affichés
+après confirmation. Le QR code reste disponible comme option ; les codes
+e-mail et ceux de l'application d'authentification sont distincts.
+
 MOB-001 fournit un premier client Flutter installable sur Android. Il utilise exclusivement l’API utilisateur `/api/v1/` et conserve les jetons dans le stockage sécurisé du téléphone.
 
 ## Fonctionnalités du pilote
@@ -50,6 +57,24 @@ L’aperçu `8081` nécessite Django actif sur `127.0.0.1:8001`. L’origine loc
 Validation au 5 octobre : analyse Flutter sans erreur, **11 tests applicatifs ciblés réussis** après le correctif d’actualisation, et APK Firebase installé sur le téléphone réel. La récupération du mot de passe envoie un lien temporaire, conserve une réponse identique pour une adresse inconnue et limite les demandes répétées. Les tests couvrent aussi la redirection des utilisateurs déjà connectés et le refus du tableau de bord aux visiteurs anonymes.
 
 ## APK de recette
+
+Mise à jour du 18 octobre 2026 : l'APK **1.0.0+2 avec Firebase** a été
+installée en mise à jour sur le **V20**, puis ouverte. Son certificat est
+identique à celui de la version précédente ; son intégrité ZIP, le serveur
+HTTPS intégré et les paramètres publics Firebase ont été vérifiés.
+Le client contient le libellé « Présence connue · notification silencieuse ».
+Les 8 tests de `test/mobile_api_test.dart` passent. L'utilisateur a confirmé
+le 18 octobre « Les deux vérifications fonctionnent » pour Caméras → état
+de surveillance appliqué et Alertes → présence connue silencieuse sans
+proposition de confirmer une intrusion. FACE-002 est dans **Terminé**.
+
+Artefact installé :
+`E:\CodexCaches\sentinelle-mobile-build-face-v2-20261016\app\outputs\apk\debug\app-debug.apk`
+(176 916 934 octets, environ 168,7 Mo), SHA-256
+`9679367abec4e3e5acfa92f582b4f858ac2ca3116f5f4f3a11e615177e7908b1`.
+
+Après correction de la jonction, le même fichier est également vérifié dans
+`mobile/build/app/outputs/flutter-apk/app-debug.apk`, avec la même empreinte.
 
 Le fichier à générer après toute modification est :
 
@@ -90,6 +115,12 @@ Le câble USB sert uniquement à installer l'APK de recette. La connexion utilis
 Débrancher le câble ne doit pas interrompre la connexion tant que le téléphone et le PC ont accès à Internet et que la tâche locale de production tourne.
 
 ## Développement
+
+Avec `tool/build_android.ps1 -BuildDir <dossier>`, `mobile/build` est aligné
+sur ce dossier par une jonction Windows, pour que Flutter et Gradle trouvent
+la même APK. Les anciens dossiers cibles sont conservés ; un dossier
+`mobile/build` ordinaire est refusé plutôt que déplacé. `-CheckOnly` ne
+modifie pas la jonction.
 
 Depuis `mobile/` :
 

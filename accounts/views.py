@@ -1,6 +1,7 @@
 import logging
 
 from django.contrib import messages
+from django.conf import settings
 from django.contrib.auth import get_user_model, login
 from django.contrib.auth.views import (
     LoginView,
@@ -31,8 +32,10 @@ from .mfa import (
     PREAUTH_NEXT_KEY,
     PREAUTH_USER_KEY,
     VERIFIED_USER_KEY,
+    SETUP_EMAIL_USER_KEY,
     clear_preauth,
     consume_mfa_factor,
+    consume_email_code,
     establish_preauth,
     email_delivery_configured,
     generate_recovery_codes,
@@ -240,27 +243,77 @@ class MFASetupView(LoginRequiredMixin, View):
 
     def get(self, request):
         device = _pending_device(request.user)
-        return render(
+        return self._render(request, device)
+
+    def _render(self, request, device, form=None, *, method="email", status=200, recovery_codes=None):
+        form = form if form is not None else MFACodeForm()
+        if method == "email":
+            form.fields["code"].label = "Code reçu par e-mail"
+        email_form = form if method == "email" else MFACodeForm()
+        totp_form = form if method == "totp" else MFACodeForm()
+        email_form.fields["code"].label = "Code reçu par e-mail"
+        email_form.fields["code"].widget.attrs["id"] = "id_email_code"
+        totp_form.fields["code"].widget.attrs["id"] = "id_totp_code"
+        response = render(
             request,
             self.template_name,
             {
                 "device": device,
-                "form": MFACodeForm(),
+                "form": form,
+                "email_form": email_form,
+                "totp_form": totp_form,
+                "setup_method": method,
+                "masked_email": mask_email(request.user.email),
+                "email_sent": request.session.get(SETUP_EMAIL_USER_KEY) == request.user.pk,
+                "email_ttl_minutes": settings.EMAIL_OTP_TTL_SECONDS // 60,
+                "recovery_codes": recovery_codes,
             },
+            status=status,
         )
+        response["Cache-Control"] = "no-store, private"
+        return response
+
+    def _send_email(self, request, device):
+        rate = check_rate_limit("mfa_email", request, identifier=fingerprint(str(request.user.pk)))
+        if not rate.allowed:
+            messages.error(request, "Trop d’envois. Réessayez dans quelques minutes.")
+            response = self._render(request, device, status=429)
+            response["Retry-After"] = str(rate.retry_after)
+            return response
+        try:
+            if not email_delivery_configured():
+                raise RuntimeError("Envoi e-mail indisponible.")
+            with transaction.atomic():
+                locked = MFADevice.objects.select_for_update().get(user=request.user)
+                if locked.is_confirmed:
+                    return redirect("mfa-setup")
+                issue_email_code(request.user, purpose="setup")
+        except Exception:
+            logger.exception("Echec d'envoi du code d'activation MFA.")
+            record_audit("auth.mfa.setup_email.failure", ResultatAudit.ECHEC, request=request, user=request.user)
+            messages.error(request, "Le code n’a pas pu être envoyé. Réessayez dans un instant.")
+            return self._render(request, device, status=503)
+        request.session[SETUP_EMAIL_USER_KEY] = request.user.pk
+        record_audit("auth.mfa.setup_email.sent", request=request, user=request.user)
+        messages.success(request, f"Code envoyé à {mask_email(request.user.email)}. Consultez aussi les indésirables.")
+        return redirect("mfa-setup")
 
     def post(self, request):
+        pending = _pending_device(request.user)
+        if pending.is_confirmed:
+            return redirect("mfa-setup")
+        if request.POST.get("action") == "send_email":
+            return self._send_email(request, pending)
+        # Old, already-open QR forms remain usable after this update.
+        method = request.POST.get("method", "totp")
+        if method not in ("email", "totp"):
+            raise Http404
         form = MFACodeForm(request.POST)
         rate = check_rate_limit("mfa", request, identifier=fingerprint(str(request.user.pk)))
         if not rate.allowed:
             form.is_valid()
             form.add_error(None, "Trop de tentatives. Réessayez dans quelques minutes.")
-            response = render(
-                request,
-                self.template_name,
-                {"device": _pending_device(request.user), "form": form},
-                status=429,
-            )
+            response = self._render(request, pending, form, method=method, status=429)
             response["Retry-After"] = str(rate.retry_after)
             return response
         with transaction.atomic():
@@ -270,24 +323,38 @@ class MFASetupView(LoginRequiredMixin, View):
             if device.is_confirmed:
                 return redirect("mfa-setup")
             if form.is_valid():
-                counter = verify_totp(
-                    device.get_secret(), form.cleaned_data["code"], last_counter=device.last_counter
-                )
-                if counter is not None:
+                code = form.cleaned_data["code"]
+                counter = None
+                if method == "email":
+                    accepted = (request.session.get(SETUP_EMAIL_USER_KEY) == request.user.pk
+                                and consume_email_code(request.user, code))
+                else:
+                    counter = verify_totp(device.get_secret(), code, last_counter=device.last_counter)
+                    accepted = counter is not None
+                if accepted:
+                    if method == "email":
+                        # An abandoned (or shared) setup QR must not become an
+                        # extra factor after activation through the e-mail path.
+                        device.set_secret(generate_secret())
+                        device.last_counter = -1
+                    else:
+                        device.last_counter = counter
                     device.confirmed_at = timezone.now()
-                    device.last_counter = counter
-                    device.save(update_fields=("confirmed_at", "last_counter", "updated_at"))
+                    device.save()
                     recovery_codes = generate_recovery_codes(request.user)
                     request.session[VERIFIED_USER_KEY] = request.user.pk
-                    record_audit("auth.mfa.enabled", request=request, user=request.user, target=device)
+                    request.session.pop(SETUP_EMAIL_USER_KEY, None)
+                    record_audit("auth.mfa.enabled", request=request, user=request.user, target=device,
+                                 metadata={"method": method})
                     messages.success(request, "L’authentification multifacteur est activée.")
-                    return render(
-                        request,
-                        self.template_name,
-                        {"device": device, "form": MFACodeForm(), "recovery_codes": recovery_codes},
-                    )
-                form.add_error("code", "Code incorrect ou déjà utilisé.")
-        return render(request, self.template_name, {"device": device, "form": form}, status=400)
+                    return self._render(request, device, recovery_codes=recovery_codes)
+                error = ("Code e-mail incorrect ou expiré. Utilisez le dernier code reçu."
+                         if method == "email" else
+                         "Code de l’application incorrect. Attendez un nouveau code et vérifiez l’heure automatique du téléphone.")
+                form.add_error("code", error)
+        record_audit("auth.mfa.setup.failure", ResultatAudit.REFUS, request=request, user=request.user,
+                     metadata={"method": method})
+        return self._render(request, device, form, method=method, status=400)
 
 
 class MFAQRCodeView(LoginRequiredMixin, View):

@@ -21,6 +21,7 @@ PREAUTH_EXPIRES_KEY = "mfa_preauth_expires_at"
 PREAUTH_NEXT_KEY = "mfa_preauth_next"
 PREAUTH_EMAIL_SENT_KEY = "mfa_preauth_email_sent"
 VERIFIED_USER_KEY = "mfa_verified_user_id"
+SETUP_EMAIL_USER_KEY = "mfa_setup_email_user_id"
 RECOVERY_ALPHABET = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ"
 
 
@@ -91,11 +92,13 @@ def email_code_digest(code):
     ).hexdigest()
 
 
-def issue_email_code(user):
+def issue_email_code(user, *, purpose="login"):
     from datetime import timedelta
 
     from .models import MFAEmailChallenge
 
+    labels = {"login": "connexion", "setup": "activation"}
+    label = labels[purpose]
     code = f"{secrets.randbelow(1_000_000):06d}"
     expires_at = timezone.now() + timedelta(seconds=settings.EMAIL_OTP_TTL_SECONDS)
     challenge = MFAEmailChallenge.objects.create(
@@ -104,10 +107,11 @@ def issue_email_code(user):
         expires_at=expires_at,
     )
     try:
-        send_mail(
-            "Votre code de connexion Sentinelle Maison",
+        sent = send_mail(
+            f"Votre code d'{label} Sentinelle Maison" if purpose == "setup" else "Votre code de connexion Sentinelle Maison",
             (
-                f"Votre code de connexion est : {code}\n\n"
+                f"Votre code d'activation est : {code}\n\n" if purpose == "setup" else f"Votre code de connexion est : {code}\n\n"
+            ) + (
                 f"Il expire dans {settings.EMAIL_OTP_TTL_SECONDS // 60} minutes et ne peut être utilisé qu'une fois.\n"
                 "Si vous n'êtes pas à l'origine de cette demande, ignorez ce message."
             ),
@@ -115,6 +119,8 @@ def issue_email_code(user):
             [user.email],
             fail_silently=False,
         )
+        if sent != 1:
+            raise RuntimeError("Le service e-mail n'a pas accepte l'envoi.")
     except Exception:
         challenge.delete()
         raise

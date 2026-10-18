@@ -131,11 +131,13 @@ void main() {
                     'id': 'event-1',
                     'camera_name': 'Entrée',
                     'type': 'line_crossing',
-                    'priorite_alerte': 100,
-                    'alert_priority_label': 'Urgente',
+                    'priorite_alerte': 50,
+                    'alert_priority_label': 'Normale',
                     'horodatage_observation': '2026-09-27T10:00:00Z',
                     'confiance_ia': 0.91,
-                    'notification_supprimee': false,
+                    'notification_supprimee': true,
+                    'raison_priorite':
+                        'Profil volontaire reconnu ; présence conservée sans notification.',
                   },
                 ],
               });
@@ -162,7 +164,8 @@ void main() {
         expect(summary.cameras.first.appliedActive, isFalse);
         expect(summary.cameras.first.appliedAt, isNotNull);
         expect(summary.recentEvents.single.cameraName, 'Entrée');
-        expect(summary.recentEvents.single.priorityLevel, 100);
+        expect(summary.recentEvents.single.priorityLevel, 50);
+        expect(summary.recentEvents.single.isKnownPresence, isTrue);
         expect(store.session?.refreshToken, 'refresh-1');
       },
     );

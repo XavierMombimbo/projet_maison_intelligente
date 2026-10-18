@@ -290,6 +290,10 @@ dd { margin: 3px 0 20px; font-size: 1.02rem; font-weight: 580; }
 .errorlist { margin: 6px 0; padding-left: 20px; color: var(--danger-dark); font-size: .86rem; }
 .auth-card .button[type="submit"] { width: 100%; margin-top: 4px; }
 .mfa-qr { width: min(260px, 100%); display: block; margin: 18px auto; padding: 10px; background: #fff; border: 1px solid var(--line); border-radius: 12px; }
+.mfa-setup-shell { align-items: start; gap: 32px; }
+.mfa-setup-shell .auth-context h1 { font-size: clamp(1.5rem, 3vw, 2.5rem); line-height: 1.15; }
+.mfa-app-option { margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--line); }
+.mfa-app-option summary { cursor: pointer; color: var(--ink-soft); font-weight: 650; }
 
 .biometric-consent-form {
   max-width: 680px;

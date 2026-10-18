@@ -20,7 +20,7 @@ EXTENSIONS = {'.py', '.html', '.css', '.js', '.cjs', '.mjs', '.json', '.yaml', '
               '.dart', '.kt', '.kts', '.xml', '.gradle', '.properties', '.sh', '.bat', '.xcconfig', '.plist',
               '.swift', '.storyboard', '.pbxproj', '.xcscheme', '.xcworkspacedata', '.png', '.ico', '.svg',
               '.webmanifest', '.lock', '.ttf', '.otf', '.woff', '.woff2', '.wasm', '.onnx', '.jar', '.xcworkspacedata'}
-EXCLUDED_PARTS = {'.git', '.codex', '.agents', '.venv', '.dart_tool', '.gradle', 'build', '__pycache__', 'tmp', 'node_modules', 'Pods', 'ephemeral', '.symlinks'}
+EXCLUDED_PARTS = {'.git', '.codex', '.agents', '.idea', '.venv', '.dart_tool', '.gradle', 'build', '__pycache__', 'tmp', 'node_modules', 'Pods', 'ephemeral', '.symlinks'}
 EXCLUDED_FILES = {'local.properties', 'Generated.xcconfig', 'flutter_export_environment.sh',
                   'cloudflared-sentinelle.yml', 'build_academic_report.py', 'export_docx_pdf.ps1'}
 PRIVATE_DOCS = {'ETAT_ACTUEL.md', 'RELAIS_AGENTS.md'}

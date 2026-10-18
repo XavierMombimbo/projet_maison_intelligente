@@ -1181,9 +1181,14 @@ class _EventCard extends StatelessWidget {
                               color: colors.onSurfaceVariant,
                             ),
                           ),
-                        if (event.grouped)
+                        if (event.isKnownPresence)
                           const Text(
-                            'Regroupée',
+                            'Présence connue · notification silencieuse',
+                            style: TextStyle(fontSize: 11),
+                          )
+                        else if (event.grouped)
+                          const Text(
+                            'Notification silencieuse',
                             style: TextStyle(fontSize: 11),
                           ),
                         if (event.status != 'new')
@@ -1281,6 +1286,7 @@ class _EventScreenState extends State<_EventScreen> {
         !_busy &&
         _event.canControl &&
         _event.status == 'new' &&
+        !_event.isKnownPresence &&
         widget.controller.monitoring != null;
     return Scaffold(
       appBar: AppBar(
@@ -1343,7 +1349,9 @@ class _EventScreenState extends State<_EventScreen> {
               ),
               const SizedBox(height: 14),
               Text(
-                _event.status == 'new'
+                _event.isKnownPresence
+                    ? 'Présence volontaire reconnue'
+                    : _event.status == 'new'
                     ? 'Vérifiez la situation'
                     : _event.status == 'false_alarm'
                     ? 'Fausse alerte'
@@ -1370,7 +1378,10 @@ class _EventScreenState extends State<_EventScreen> {
                   ),
                   if (_event.confidence != null)
                     Text('Confiance ${(100 * _event.confidence!).round()} %'),
-                  if (_event.grouped) const Text('Alerte regroupée'),
+                  if (_event.isKnownPresence)
+                    const Text('Notification silencieuse')
+                  else if (_event.grouped)
+                    const Text('Notification silencieuse'),
                 ],
               ),
               const SizedBox(height: 18),

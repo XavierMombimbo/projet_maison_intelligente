@@ -1,18 +1,27 @@
 {% extends "base.html" %}
 {% block title %}Authentification multifacteur{% endblock %}
 {% block content %}
-<div class="auth-shell">
-  <div class="auth-context"><p class="eyebrow">Sécurité du compte</p><h1>Authentification multifacteur</h1><p class="lead">Un code temporaire protège votre compte même si votre mot de passe est compromis.</p></div>
-  <section class="auth-card">
+<div class="auth-shell mfa-setup-shell">
+  <div class="auth-context"><p class="eyebrow">Sécurité du compte</p><h1>Sécurisez votre compte</h1><p class="lead">Ajoutez un code de vérification après votre mot de passe.</p></div>
+  <section class="auth-card" aria-labelledby="mfa-setup-title">
     {% if device.is_confirmed %}
-      <p class="eyebrow">Protection active</p><h2>MFA activée</h2><p class="notice">Votre compte demande désormais un code TOTP après le mot de passe.</p>
+      <p class="eyebrow">Protection active</p><h2 id="mfa-setup-title">Votre compte est protégé</h2><p class="notice">À la connexion, un code sera envoyé à votre adresse e-mail. Vous pouvez aussi utiliser une application déjà configurée ou un code de récupération.</p>
       {% if recovery_codes %}<div class="notice warning"><strong>Enregistrez ces codes maintenant.</strong><p>Ils ne seront plus affichés. Chaque code ne fonctionne qu’une fois.</p><ul class="recovery-codes">{% for code in recovery_codes %}<li><code>{{ code }}</code></li>{% endfor %}</ul></div>{% endif %}
-      <div class="action-stack"><a class="button secondary" href="{% url 'mfa-replace' %}">Remplacer l’application</a><a class="button secondary" href="{% url 'mfa-revoke-sessions' %}">Révoquer les autres sessions</a><a class="button secondary" href="{% url 'mobile-api-test' %}">Tester la connexion mobile</a></div>
+      <div class="action-stack"><a class="button" href="{% url 'dashboard' %}">Continuer vers le tableau de bord</a><a class="button secondary" href="{% url 'mfa-replace' %}">Configurer ou remplacer une application</a><a class="button secondary" href="{% url 'mfa-revoke-sessions' %}">Révoquer les autres sessions</a></div>
     {% else %}
-      <p class="eyebrow">Configuration</p><h2>Scanner puis confirmer</h2>
-      <img class="mfa-qr" src="{% url 'mfa-qr' %}" alt="QR code à scanner avec une application d’authentification">
-      <p class="muted">Scannez ce QR code avec votre application d’authentification, puis saisissez le code affiché. La MFA ne sera active qu’après confirmation.</p>
-      <form method="post" novalidate>{% csrf_token %}{{ form.as_p }}<button class="button" type="submit">Activer la MFA</button></form>
+      <p class="eyebrow">Activation par e-mail</p><h2 id="mfa-setup-title">Recevez votre code</h2>
+      <p>Nous l’enverrons à <strong>{{ masked_email }}</strong>. Aucune application supplémentaire n’est nécessaire.</p>
+      {% if email_sent %}
+        <p class="notice">Saisissez le dernier code reçu. Il expire après {{ email_ttl_minutes }} minutes. Vérifiez aussi les indésirables.</p>
+        <form method="post" novalidate>{% csrf_token %}<input type="hidden" name="method" value="email">{{ email_form.as_p }}<button class="button" type="submit">Activer la protection</button></form>
+      {% endif %}
+      <form method="post">{% csrf_token %}<input type="hidden" name="action" value="send_email"><button class="button{% if email_sent %} secondary{% endif %}" type="submit">{% if email_sent %}Renvoyer un code{% else %}Envoyer le code par e-mail{% endif %}</button></form>
+      <details class="mfa-app-option"{% if setup_method == 'totp' %} open{% endif %}>
+        <summary>Utiliser une application d’authentification</summary>
+        <p>Ajoutez ce compte dans votre application avec le QR code, puis saisissez le code qu’elle affiche. Cette option utilise un code différent de celui reçu par e-mail.</p>
+        <img class="mfa-qr" loading="lazy" src="{% url 'mfa-qr' %}" alt="QR code personnel à scanner avec votre application d’authentification">
+        <form method="post" novalidate>{% csrf_token %}<input type="hidden" name="method" value="totp">{{ totp_form.as_p }}<button class="button secondary" type="submit">Activer avec l’application</button></form>
+      </details>
     {% endif %}
   </section>
 </div>

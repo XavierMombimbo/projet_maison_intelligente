@@ -1,6 +1,9 @@
 # Registre des modèles et décisions techniques
 
-État au **24 septembre 2026**. Le fichier machine `config/model_registry.json` est la source des versions, origines, statuts et empreintes. Tout nouveau poids doit être ajouté avec sa licence, sa taille et son SHA-256 avant intégration.
+Mise à jour posture : **18 octobre 2026**. Le fichier machine
+`config/model_registry.json` est la source des versions, origines, statuts
+et empreintes. Tout nouveau poids doit être ajouté avec sa licence, sa
+taille et son SHA-256 avant intégration.
 
 ## Décisions proposées pour le produit
 
@@ -9,7 +12,8 @@
 - **Mobile :** Flutter, Android en premier. Le code restera compatible iOS, dont les builds nécessitent macOS/Xcode. Flutter est sous BSD-3-Clause et prend en charge Android et iOS.
 - **Objets et animaux :** conserver YOLO11n uniquement pour le développement actuel. Évaluer **RF-DETR Nano 1.10.1** comme candidat de production permissif pour `person`, `dog`, `cat` et les classes COCO utiles.
 - **Visages :** la recette FACE-002 utilise InsightFace 0.7.3 et ArcFace `buffalo_l` uniquement pour le projet académique non commercial confirmé. Les poids publics InsightFace restent interdits pour un produit commercial ; ils sont hors Git sur E:, hachés fichier par fichier dans le registre, et aucun visage brut n’est conservé.
-- **Postures, gestes et actions :** RTMPose puis MediaPipe sont les premiers candidats. MMAction2 reste expérimental jusqu'à définition des actions, des données et du matériel.
+- **Postures :** YOLO11n Pose ONNX officiel, sous AGPL-3.0, est approuvé uniquement pour la recette académique volontaire et isolée. Empreinte GitHub vérifiée avant chargement ; poids hors Git. RTMPose reste bloqué sur les droits du checkpoint ; OpenPose reste indisponible depuis ce poste. Voir [POSTURES.md](POSTURES.md) pour les mesures réelles et les limites du cadrage.
+- **Gestes et actions :** leurs cartes et évaluations restent distinctes de l'estimation géométrique des postures.
 
 ## État des composants
 
@@ -21,6 +25,7 @@
 | InsightFace 0.7.3 / ArcFace `buffalo_l` | Approuvé académique | Code MIT ; poids publics réservés à la recherche non commerciale, empreintes vérifiées avant usage |
 | ByteTrack | Candidat | Suivi MIT sans poids ; commit à figer lors de l'intégration |
 | RTMPose / MMPose 1.3.2 | Candidat | Code Apache-2.0 ; vérifier séparément checkpoint et données |
+| YOLO11n Pose 640 ONNX, export 8.3.238 | Approuvé académique isolé | AGPL-3.0 ; asset Ultralytics officiel de 11 853 451 octets, digest GitHub vérifié ; aucune activation de production |
 | MediaPipe 1.0.1 | Candidat | Code Apache-2.0 ; figer le bundle de tâche et traiter la télémétrie |
 | MMAction2 1.2.0 | Évaluation | Code Apache-2.0 ; classes, poids, données et GPU restent à choisir |
 

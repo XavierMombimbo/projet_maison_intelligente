@@ -89,6 +89,26 @@
       "config": "config/vendor/rtmpose/rtmpose-s_8xb256-420e_coco-256x192.py"
     },
     {
+      "id": "yolo11n-pose-640",
+      "status": "academic_approved",
+      "task": "human_pose",
+      "version": "Ultralytics ONNX 8.3.238 / official assets v8.3.0 / SHA-256 pinned",
+      "source": "https://github.com/ultralytics/assets/releases/download/v8.3.0/yolo11n-pose.onnx",
+      "license": "AGPL-3.0; https://www.ultralytics.com/license ; isolated consenting academic recipe only",
+      "classes": "COCO-17 keypoints; upright, low, horizontal, uncertain; no action or intent classification",
+      "artifact": null,
+      "bytes": 11853451,
+      "sha256": "93e2866b0ce678f99b4dd88af0c12e9ea2edf079a361dc2ecbc6226b77ff6408",
+      "hardware": "CPU ONNX Runtime, 2 inference threads; external E: bundle; opt-in finite recipe, no production activation",
+      "files": [
+        {
+          "name": "yolo11n-pose.onnx",
+          "bytes": 11853451,
+          "sha256": "93e2866b0ce678f99b4dd88af0c12e9ea2edf079a361dc2ecbc6226b77ff6408"
+        }
+      ]
+    },
+    {
       "id": "mediapipe-gesture-recognizer",
       "status": "candidate",
       "task": "hand_gesture",

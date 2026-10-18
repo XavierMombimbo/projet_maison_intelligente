@@ -2,6 +2,7 @@
 param(
     [string]$ApiBaseUrl = 'https://sentinelle.smartxcongo.com',
     [string]$GradleUserHome = $env:SENTINELLE_GRADLE_USER_HOME,
+    [string]$BuildDir = $env:SENTINELLE_MOBILE_BUILD_DIR,
     [string]$JavaHome = $env:SENTINELLE_JAVA_HOME,
     [string]$JavaSocketTemp = $env:SENTINELLE_JAVA_SOCKET_TMP,
     [switch]$WithoutFirebase,
@@ -42,9 +43,21 @@ if ([string]::IsNullOrWhiteSpace($GradleUserHome)) {
     }
 }
 
+if ([string]::IsNullOrWhiteSpace($BuildDir)) {
+    if (Test-Path -LiteralPath 'E:\') {
+        $BuildDir = 'E:\CodexCaches\sentinelle-mobile-build'
+    } else {
+        $BuildDir = Join-Path $env:LOCALAPPDATA 'SentinelleMaison\mobile-build'
+    }
+}
+New-Item -ItemType Directory -Path $BuildDir -Force | Out-Null
+
 if ([string]::IsNullOrWhiteSpace($JavaHome)) {
     $portableJavaHome = 'E:\CodexCaches\microsoft-jdk-21\jdk-21.0.12.1+1'
-    if (Test-Path -LiteralPath (Join-Path $portableJavaHome 'bin\java.exe')) {
+    # Directory.Exists returns false when the optional cache volume is not mounted.
+    # Join-Path would instead raise before the Gradle cache fallback can run.
+    if ([System.IO.Directory]::Exists($portableJavaHome) -and
+        (Test-Path -LiteralPath (Join-Path $portableJavaHome 'bin\java.exe'))) {
         $JavaHome = $portableJavaHome
     }
 }
@@ -96,6 +109,7 @@ if ($WithoutFirebase) {
 $previousJavaHome = $env:JAVA_HOME
 $previousJavaToolOptions = $env:JAVA_TOOL_OPTIONS
 $previousGradleUserHome = $env:GRADLE_USER_HOME
+$previousBuildDir = $env:SENTINELLE_MOBILE_BUILD_DIR
 $previousPath = $env:PATH
 $socketOption = "-Djdk.net.unixdomain.tmpdir=`"$JavaSocketTemp`""
 $flutterArguments = @(
@@ -114,6 +128,7 @@ if (-not $WithoutFirebase) {
 
 Write-Host "Projet mobile : $mobileRoot"
 Write-Host "Cache Gradle : $GradleUserHome"
+Write-Host "Artefacts Android : $BuildDir"
 Write-Host "Java : $(if ([string]::IsNullOrWhiteSpace($JavaHome)) { 'configuration Flutter' } else { $JavaHome })"
 Write-Host "Sockets Java : $JavaSocketTemp"
 Write-Host "Serveur integre : $ApiBaseUrl"
@@ -128,7 +143,40 @@ if ($CheckOnly) {
     return
 }
 
+# Flutter 3.41 still discovers APKs under <project>/build even when Gradle's
+# output directory is overridden. Keep that entry point on the same volume.
+$flutterBuildPath = Join-Path $mobileRoot 'build'
+$resolvedBuildDir = (Get-Item -LiteralPath $BuildDir).FullName.TrimEnd('\')
+if ($resolvedBuildDir -ne $flutterBuildPath.TrimEnd('\')) {
+    if ($resolvedBuildDir.StartsWith("$flutterBuildPath\", [StringComparison]::OrdinalIgnoreCase)) {
+        throw 'BuildDir ne peut pas etre un sous-dossier de mobile/build.'
+    }
+    $existingBuildEntry = Get-Item -LiteralPath $flutterBuildPath -Force -ErrorAction SilentlyContinue
+    $previousBuildTarget = $null
+    if ($null -ne $existingBuildEntry) {
+        if ($existingBuildEntry.LinkType -ne 'Junction') {
+            throw 'mobile/build existe sans etre une jonction. Aucun fichier existant ne sera deplace.'
+        }
+        $previousBuildTarget = @($existingBuildEntry.Target)[0]
+    }
+    if ($previousBuildTarget -ne $resolvedBuildDir) {
+        if ($null -ne $existingBuildEntry) {
+            # Delete only the checked junction itself, never its target directory.
+            [System.IO.Directory]::Delete($flutterBuildPath)
+        }
+        try {
+            New-Item -ItemType Junction -Path $flutterBuildPath -Target $resolvedBuildDir | Out-Null
+        } catch {
+            if ($null -ne $previousBuildTarget -and -not (Test-Path -LiteralPath $flutterBuildPath)) {
+                New-Item -ItemType Junction -Path $flutterBuildPath -Target $previousBuildTarget | Out-Null
+            }
+            throw
+        }
+    }
+}
+
 $env:GRADLE_USER_HOME = $GradleUserHome
+$env:SENTINELLE_MOBILE_BUILD_DIR = $BuildDir
 if (-not [string]::IsNullOrWhiteSpace($JavaHome)) {
     $env:JAVA_HOME = $JavaHome
     $env:PATH = "$(Join-Path $JavaHome 'bin');$previousPath"
@@ -144,12 +192,13 @@ try {
 } finally {
     Pop-Location
     $env:GRADLE_USER_HOME = $previousGradleUserHome
+    $env:SENTINELLE_MOBILE_BUILD_DIR = $previousBuildDir
     $env:JAVA_HOME = $previousJavaHome
     $env:JAVA_TOOL_OPTIONS = $previousJavaToolOptions
     $env:PATH = $previousPath
 }
 
-$apkPath = Join-Path $mobileRoot 'build\app\outputs\flutter-apk\app-debug.apk'
+$apkPath = Join-Path $BuildDir 'app\outputs\flutter-apk\app-debug.apk'
 if (-not (Test-Path -LiteralPath $apkPath)) {
     throw "Flutter a termine sans produire l'APK attendu : $apkPath"
 }

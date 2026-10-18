@@ -14,8 +14,8 @@ class MFACodeForm(forms.Form):
     code = forms.RegexField(
         r"^\d{6}$",
         label="Code à six chiffres",
-        error_messages={"invalid": "Saisissez les six chiffres affichés par l’application."},
-        widget=forms.TextInput(attrs={"inputmode": "numeric", "autocomplete": "one-time-code"}),
+        error_messages={"invalid": "Saisissez un code à six chiffres."},
+        widget=forms.TextInput(attrs={"inputmode": "numeric", "autocomplete": "one-time-code", "maxlength": "6"}),
     )
 
 

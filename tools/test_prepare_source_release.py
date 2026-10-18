@@ -20,7 +20,7 @@ class SourceReleaseTests(unittest.TestCase):
                      'docs/produit/ETAT_ACTUEL.md', 'docs/rapport_academique.docx',
                      'mobile/android/local.properties', 'tools/cloudflared-sentinelle.yml',
                      'gateway/__pycache__/credentials.pyc', 'mobile/tmp/token.json',
-                     'mobile/build/app.json'):
+                     'mobile/build/app.json', 'mobile/.idea/workspace.xml'):
             self.assertFalse(is_source(name), name)
 
     def test_known_credentials_and_runtime_database_are_blocked(self):

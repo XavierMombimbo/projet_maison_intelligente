@@ -99,6 +99,9 @@ class RecentEvent {
   final bool canControl;
   final String reason;
 
+  bool get isKnownPresence =>
+      grouped && reason.startsWith('Profil volontaire reconnu');
+
   Map<String, Object?> toCache() => {
     'id': id,
     'camera_name': cameraName,

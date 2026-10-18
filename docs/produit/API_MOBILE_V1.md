@@ -4,6 +4,14 @@ Base : `/api/v1/`. Toutes les réponses d’authentification utilisent `Cache-Co
 
 ## Connexion
 
+Un nouveau compte peut d'abord activer sa protection sur `/securite/mfa/`
+par un code e-mail, sans application supplémentaire. L'envoi est explicite,
+limité et n'active rien à lui seul ; la confirmation d'un code récent reçu
+par cette session active la protection et affiche les codes de récupération
+une seule fois. Le secret d'un éventuel QR abandonné est renouvelé à cette
+activation. Le parcours QR reste facultatif. Les comptes déjà protégés
+conservent leurs facteurs. Cette évolution ne change pas le contrat API.
+
 1. `POST /auth/login/` reçoit `identifier`, `password`, `device_id` et `device_name`. Un mot de passe correct produit seulement un défi temporaire et envoie un code MFA par e-mail.
 2. `POST /auth/mfa/verify/` reçoit `challenge` et `code`. Un code e-mail, TOTP ou de récupération valide produit un jeton d’accès de courte durée et un jeton de renouvellement opaque.
 3. `POST /auth/refresh/` reçoit `refresh_token`. Chaque utilisation remplace immédiatement ce jeton ; sa réutilisation est refusée.
