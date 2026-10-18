@@ -294,6 +294,26 @@ dd { margin: 3px 0 20px; font-size: 1.02rem; font-weight: 580; }
 .mfa-setup-shell .auth-context h1 { font-size: clamp(1.5rem, 3vw, 2.5rem); line-height: 1.15; }
 .mfa-app-option { margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--line); }
 .mfa-app-option summary { cursor: pointer; color: var(--ink-soft); font-weight: 650; }
+.mfa-complete-shell { display: block; min-height: 0; max-width: 580px; margin: 24px auto; }
+.mfa-complete-shell .auth-card { max-width: none; }
+.mfa-complete-shell .auth-card h1 { font-size: clamp(1.5rem, 3vw, 2rem); line-height: 1.2; }
+.mfa-recovery-help { margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--line); }
+.mfa-recovery-help h2 { margin: 0 0 8px; font-size: 1.05rem; }
+.mfa-recovery-help p { margin: 0 0 12px; }
+.mfa-disclosure summary { min-height: 44px; padding: 10px 0; cursor: pointer; color: var(--brand); font-weight: 650; }
+.mfa-disclosure summary:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; border-radius: 4px; }
+.mfa-recovery-details[open] .recovery-codes { margin-bottom: 0; }
+.mfa-primary-action { margin-top: 24px; }
+.mfa-primary-action .button { width: 100%; }
+.mfa-settings { margin-top: 16px; }
+.mfa-settings summary { color: var(--ink-soft); font-size: .9rem; }
+.mfa-settings-links { display: grid; gap: 8px; padding-top: 4px; }
+.mfa-settings-links a { display: block; padding: 10px 0; }
+@media (max-width: 420px) {
+  .mfa-complete-shell .auth-card { padding: 24px 20px; }
+  .mfa-complete-shell .recovery-codes { column-gap: 12px; padding-left: 16px; }
+  .mfa-complete-shell .recovery-codes code { font-size: .9rem; letter-spacing: .04em; }
+}
 
 .biometric-consent-form {
   max-width: 680px;

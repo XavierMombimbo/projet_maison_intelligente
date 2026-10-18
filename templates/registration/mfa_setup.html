@@ -1,13 +1,31 @@
 {% extends "base.html" %}
 {% block title %}Authentification multifacteur{% endblock %}
 {% block content %}
-<div class="auth-shell mfa-setup-shell">
-  <div class="auth-context"><p class="eyebrow">Sécurité du compte</p><h1>Sécurisez votre compte</h1><p class="lead">Ajoutez un code de vérification après votre mot de passe.</p></div>
+<div class="auth-shell mfa-setup-shell{% if device.is_confirmed %} mfa-complete-shell{% endif %}">
+  {% if not device.is_confirmed %}
+    <div class="auth-context"><p class="eyebrow">Sécurité du compte</p><h1>Sécurisez votre compte</h1><p class="lead">Après votre mot de passe, un code reçu par e-mail confirme que c’est bien vous.</p></div>
+  {% endif %}
   <section class="auth-card" aria-labelledby="mfa-setup-title">
     {% if device.is_confirmed %}
-      <p class="eyebrow">Protection active</p><h2 id="mfa-setup-title">Votre compte est protégé</h2><p class="notice">À la connexion, un code sera envoyé à votre adresse e-mail. Vous pouvez aussi utiliser une application déjà configurée ou un code de récupération.</p>
-      {% if recovery_codes %}<div class="notice warning"><strong>Enregistrez ces codes maintenant.</strong><p>Ils ne seront plus affichés. Chaque code ne fonctionne qu’une fois.</p><ul class="recovery-codes">{% for code in recovery_codes %}<li><code>{{ code }}</code></li>{% endfor %}</ul></div>{% endif %}
-      <div class="action-stack"><a class="button" href="{% url 'dashboard' %}">Continuer vers le tableau de bord</a><a class="button secondary" href="{% url 'mfa-replace' %}">Configurer ou remplacer une application</a><a class="button secondary" href="{% url 'mfa-revoke-sessions' %}">Révoquer les autres sessions</a></div>
+      <p class="eyebrow">Protection active</p>
+      <h1 id="mfa-setup-title">Votre compte est protégé</h1>
+      <p>À chaque connexion, nous vous envoyons un code par e-mail pour vérifier que c’est bien vous.</p>
+      {% if recovery_codes %}
+        <div class="mfa-recovery-help">
+          <h2>Gardez un accès de secours</h2>
+          <p>Si vous ne pouvez plus consulter votre e-mail, un code de secours vous permet de vous connecter.</p>
+          <details class="mfa-disclosure mfa-recovery-details">
+            <summary>Afficher mes codes de secours</summary>
+            <p class="helptext">Conservez-les dans un endroit sûr avant de quitter cette page. Ils ne seront plus affichés et chacun ne fonctionne qu’une fois.</p>
+            <ul class="recovery-codes">{% for code in recovery_codes %}<li><code>{{ code }}</code></li>{% endfor %}</ul>
+          </details>
+        </div>
+      {% endif %}
+      <div class="mfa-primary-action"><a class="button" href="{% url 'dashboard' %}">Continuer vers le tableau de bord</a></div>
+      <details class="mfa-disclosure mfa-settings">
+        <summary>Autres options de sécurité</summary>
+        <div class="mfa-settings-links"><a href="{% url 'mfa-replace' %}">Configurer une application d’authentification</a><a href="{% url 'mfa-revoke-sessions' %}">Déconnecter mes autres appareils</a></div>
+      </details>
     {% else %}
       <p class="eyebrow">Activation par e-mail</p><h2 id="mfa-setup-title">Recevez votre code</h2>
       <p>Nous l’enverrons à <strong>{{ masked_email }}</strong>. Aucune application supplémentaire n’est nécessaire.</p>
