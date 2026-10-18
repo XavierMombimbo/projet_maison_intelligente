@@ -63,7 +63,7 @@ def decider_alerte(camera, objects, rule_context):
         priority = NiveauAlerte.URGENTE
         reason = "Personne ayant franchi la ligne configurée."
     elif qualified_people:
-        if face_statuses == {"recognized"}:
+        if all(item.get("face_status") == "recognized" for item in qualified_people):
             priority = NiveauAlerte.NORMALE
             reason = "Profil volontaire reconnu ; présence conservée sans notification."
             notification_supprimee = True

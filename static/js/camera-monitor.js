@@ -73,6 +73,8 @@
     const monitoringToggleForm = document.getElementById("monitoring-toggle-form");
     const monitoringToggleButton = document.getElementById("monitoring-toggle-button");
     const lastEvent = document.getElementById("last-event");
+    const faceResult = document.getElementById("face-result");
+    const faceEnabled = root.dataset.faceRecognition === "true";
     const cameraOff = document.getElementById("camera-off");
     const liveIndicator = document.getElementById("live-indicator");
     const pairingLink = document.getElementById("pairing-link");
@@ -378,7 +380,7 @@
       const canvas = document.createElement("canvas");
       const sourceWidth = stream ? video.videoWidth : 640;
       const sourceHeight = stream ? video.videoHeight : 360;
-      const scale = Math.min(1, 640 / Math.max(sourceWidth, 1));
+      const scale = Math.min(1, (faceEnabled ? 1280 : 640) / Math.max(sourceWidth, 1));
       canvas.width = Math.max(1, Math.round(sourceWidth * scale));
       canvas.height = Math.max(1, Math.round(sourceHeight * scale));
       const frameContext = canvas.getContext("2d");
@@ -419,7 +421,9 @@
         return;
       }
       cooldownUntil = Date.now() + EVENT_COOLDOWN_MS;
+      const eventStream = stream;
       const blob = await frameBlob();
+      if (!running || invalidated || stream !== eventStream) return;
       const eventId = crypto.randomUUID();
       const observedAt = new Date(Date.now() + serverClockOffsetMs).toISOString();
       const objects = normalizedObjects(predictions);
@@ -434,10 +438,12 @@
       formData.append("rule_context", JSON.stringify(ruleContext));
       formData.append("capture", blob, "detection.jpg");
       try {
+        if (faceEnabled && faceResult) faceResult.textContent = "Vérification de la capture…";
         let response = null;
         let transportError = null;
         for (let attempt = 0; attempt < 2; attempt += 1) {
           await validToken();
+          if (!running || invalidated || stream !== eventStream) return;
           const requestNonce = crypto.randomUUID();
           const requestTimestamp = Math.floor((Date.now() + serverClockOffsetMs) / 1000);
           const signature = await signDetection({
@@ -453,6 +459,7 @@
             blob,
             ruleContext
           });
+          if (!running || invalidated || stream !== eventStream) return;
           try {
             response = await cameraFetch(root.dataset.detectionUrl, {
               method: "POST",
@@ -479,12 +486,20 @@
           }
         }
         const body = await response.json();
+        if (!running || invalidated || stream !== eventStream) return;
         if (!response.ok) throw new Error(body.detail || "Échec de la transmission.");
         cooldownUntil = Date.now() + EVENT_COOLDOWN_MS;
         const ruleLabel = ruleContext.type === "line_crossing" ? "Franchissement" : "Présence prolongée";
         lastEvent.textContent = `${ruleLabel} ${body.deduplicated ? "confirmé" : "envoyé"} à ${new Date().toLocaleTimeString()}`;
-        setStatus("Événement transmis ; le flux vidéo reste local.");
+        if (faceEnabled && faceResult) {
+          faceResult.textContent = `${window.SentinelleBrowserFaceResult.describe(body)} · ${new Date().toLocaleTimeString()}`;
+        }
+        setStatus(body.face_verification?.state === "recognized" && body.notification_sent === false
+          ? "Présence reconnue, enregistrée sans notification."
+          : "Événement transmis ; le flux vidéo reste local.");
       } catch (error) {
+        if (!running || invalidated || stream !== eventStream) return;
+        if (faceEnabled && faceResult) faceResult.textContent = "Vérification indisponible : événement non confirmé";
         setStatus(error.message, true);
       }
     };
@@ -570,6 +585,7 @@
       if (detectionTimer) clearTimeout(detectionTimer);
       detectionTimer = null;
       stabilityState.textContent = "0 piste dans la zone";
+      if (faceEnabled && faceResult) faceResult.textContent = "Webcam arrêtée — aucune vérification en cours";
     }
 
     startButton.addEventListener("click", async () => {
@@ -589,7 +605,8 @@
         cameraOff.hidden = true;
         liveIndicator.hidden = false;
         stopButton.disabled = false;
-        setStatus("Webcam active. Analyse et aperçu locaux uniquement.");
+        setStatus(faceEnabled ? "Webcam active. La prochaine présence sera vérifiée sur le serveur."
+          : "Webcam active. Analyse et aperçu locaux uniquement.");
         try {
           await loadModel();
         } catch (error) {

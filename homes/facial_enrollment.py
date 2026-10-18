@@ -54,11 +54,20 @@ def template_from_capture(encoded):
     except (ValueError, binascii.Error, OSError, UnidentifiedImageError,
             Image.DecompressionBombError, Image.DecompressionBombWarning):
         raise FaceQualityError("Capture illisible. Ouvrez la caméra et réessayez.") from None
+    return embedding_from_frame(frame)
+
+
+@sensitive_variables()
+def embedding_from_frame(frame, *, person_bbox=None):
+    """Share the bounded model and lock with browser event verification."""
     if not _inference_lock.acquire(blocking=False):
         raise EnrollmentBusy
     try:
         try:
-            return _embedder(settings.BIOMETRIC_FACE_MODEL_ROOT).embedding_from_bgr(frame)
+            embedder = _embedder(settings.BIOMETRIC_FACE_MODEL_ROOT)
+            return embedder.embedding_from_bgr(frame, **(
+                {"person_bbox": person_bbox} if person_bbox is not None else {}
+            ))
         except (ModelApprovalError, FaceRecognitionError) as exc:
             if isinstance(exc, FaceQualityError):
                 raise

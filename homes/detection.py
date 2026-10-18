@@ -149,6 +149,7 @@ def create_detection_event(
     model_version="",
     objects=None,
     rule_context=None,
+    browser_user=None,
 ) -> tuple[Evenement, bool]:
     if not camera.surveillance_active:
         raise DetectionError("La surveillance de cette caméra est désactivée.")
@@ -189,13 +190,30 @@ def create_detection_event(
     normalized, mime_type, image_metadata = validate_and_normalize_capture(uploaded_file)
     event_confidence = max((item["confidence"] for item in objects), default=confidence or 0.0)
     delayed = bool(
-        contract_version == 2 and observed_at
+        contract_version >= 2 and observed_at
         and observed_at < timezone.now() - timedelta(seconds=DELAYED_ALERT_SECONDS)
     )
+    face_result = None
+    if browser_user is not None and contract_version >= 2:
+        from .browser_face import verify_browser_face
+        face_result = verify_browser_face(camera, normalized, objects)
 
     try:
         with transaction.atomic():
             locked_camera = type(camera).objects.select_for_update().get(pk=camera.pk)
+            if browser_user is not None:
+                if (not locked_camera.surveillance_active or locked_camera.date_revocation
+                        or not type(camera).objects.controllable_by(browser_user).filter(pk=camera.pk).exists()):
+                    raise DetectionError("Les droits ou la surveillance de cette caméra ont changé.")
+            if face_result is not None:
+                from .browser_face import confirm_browser_face
+                face_result = confirm_browser_face(locked_camera, face_result)
+                # Derivation belongs to the server, after verifying/fingerprinting
+                # the original signed request. Never mutate the client's payload.
+                objects = [
+                    {**item, "face_status": face_result.state} if item["label"] == "person" else item
+                    for item in objects
+                ]
             alert_decision = decider_alerte(locked_camera, objects, rule_context)
             principal_event = trouver_evenement_principal(locked_camera, alert_decision)
             event = Evenement.objects.create(
@@ -224,6 +242,7 @@ def create_detection_event(
                 metadonnees={
                     "capture": image_metadata,
                     "analyse_locale": True,
+                    **({"face_verification": face_result.public()} if face_result is not None else {}),
                     "regle": rule_context,
                     "identite_locale": {
                         "statuts": sorted({

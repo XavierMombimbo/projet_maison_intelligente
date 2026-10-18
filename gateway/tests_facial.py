@@ -49,6 +49,14 @@ class ArcFaceTemplateTests(unittest.TestCase):
 
 
 class ArcFaceAdapterTests(unittest.TestCase):
+    def test_face_must_belong_to_the_reported_person(self):
+        frame = np.zeros((100, 100, 3), dtype=np.uint8)
+        face = SimpleNamespace(det_score=.95, embedding=vector(), bbox=[10, 10, 30, 30])
+        embedder = ArcFaceEmbedder(SimpleNamespace(get=lambda image: [face]))
+        self.assertEqual(len(embedder.embedding_from_bgr(frame, person_bbox=[0, 0, .4, 1])), 2048)
+        with self.assertRaises(FaceQualityError):
+            embedder.embedding_from_bgr(frame, person_bbox=[.5, 0, .4, 1])
+
     def test_adapter_requires_one_confident_face(self):
         frame = np.zeros((20, 20, 3), dtype=np.uint8)
         app = SimpleNamespace(get=lambda image: [SimpleNamespace(det_score=0.95, embedding=vector())])

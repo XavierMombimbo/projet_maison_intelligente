@@ -990,6 +990,8 @@ class CameraMonitorView(LoginRequiredMixin, TemplateView):
         from .browser_camera import browser_camera_context
         context["browser_camera_context"] = browser_camera_context(self.request)
         context["requested_camera_id"] = self.request.GET.get("camera", "")
+        context["web_face_recognition"] = (settings.BIOMETRIC_WEB_RECOGNITION_ENABLED
+                                            and bool(settings.BIOMETRIC_FACE_MODEL_ROOT))
         return context
 
 

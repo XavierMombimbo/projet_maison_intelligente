@@ -30,6 +30,9 @@ class CameraJWTAuthentication(authentication.BaseAuthentication):
                     or not Camera.objects.controllable_by(session_request.user).filter(pk=camera.pk).exists()):
                 raise exceptions.AuthenticationFailed("Cette caméra n’est pas autorisée pour la session actuelle.")
             authentication.SessionAuthentication().enforce_csrf(request)
+            # DRF replaces the underlying request.user with CameraPrincipal
+            # after authentication; retain the verified web actor explicitly.
+            request.browser_user = session_request.user
         return CameraPrincipal(camera), payload
 
     def authenticate_header(self, request):

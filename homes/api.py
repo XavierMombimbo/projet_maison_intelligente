@@ -429,6 +429,12 @@ class CameraDetectionAPIView(CameraClockMixin, APIView):
             return rate_limited_response(rate)
         serializer = DetectionEventSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+        browser_user = getattr(request, "browser_user", None)
+        if browser_user is not None and any(
+            "face_status" in item for item in serializer.validated_data.get("objects", [])
+        ):
+            return Response({"detail": "Le résultat facial du navigateur est calculé par le serveur."},
+                            status=status.HTTP_400_BAD_REQUEST)
         try:
             request_nonce, request_timestamp = verify_detection_signature(
                 request=request,
@@ -449,6 +455,7 @@ class CameraDetectionAPIView(CameraClockMixin, APIView):
                 model_version=serializer.validated_data.get("model_version", ""),
                 objects=serializer.validated_data.get("objects", []),
                 rule_context=serializer.validated_data.get("rule_context"),
+                browser_user=browser_user,
             )
         except InvalidEventSignature as exc:
             record_audit(
@@ -502,6 +509,7 @@ class CameraDetectionAPIView(CameraClockMixin, APIView):
                 "alert_priority": event.priorite_alerte,
                 "alert_priority_label": event.get_priorite_alerte_display(),
                 "notification_sent": not event.notification_supprimee,
+                "face_verification": event.metadonnees.get("face_verification"),
                 "grouped_under": (
                     str(event.evenement_principal_id)
                     if event.evenement_principal_id

@@ -129,7 +129,7 @@ class ArcFaceEmbedder:
             raise FaceRecognitionError("Modèle ArcFace indisponible ou illisible.") from exc
         return cls(application)
 
-    def embedding_from_bgr(self, frame: np.ndarray) -> bytes:
+    def embedding_from_bgr(self, frame: np.ndarray, *, person_bbox=None) -> bytes:
         if not isinstance(frame, np.ndarray) or frame.ndim != 3 or frame.size == 0:
             raise FaceQualityError("Image faciale invalide.")
         try:
@@ -141,4 +141,18 @@ class ArcFaceEmbedder:
             raise FaceQualityError("Aucun visage suffisamment net n’est visible.")
         if len(faces) != 1:
             raise FaceQualityError("Un seul visage doit être visible pendant l’enrôlement.")
+        if person_bbox is not None:
+            # Check the full frame first: cropping alone could assign the only
+            # visible face to a different person whose detection overlaps it.
+            bounds = np.asarray(getattr(faces[0], "bbox", []), dtype=float)
+            if bounds.shape != (4,) or not np.isfinite(bounds).all():
+                raise FaceQualityError("Position du visage indisponible.")
+            x, y, width, height = person_bbox
+            fh, fw = frame.shape[:2]
+            left, top, right, bottom = bounds
+            area = max(0, right - left) * max(0, bottom - top)
+            overlap = (max(0, min(right, (x + width) * fw) - max(left, x * fw))
+                       * max(0, min(bottom, (y + height) * fh) - max(top, y * fh)))
+            if area <= 0 or overlap / area < 0.9:
+                raise FaceQualityError("Le visage ne correspond pas à la personne détectée.")
         return serialize_embedding(getattr(faces[0], "embedding", None))

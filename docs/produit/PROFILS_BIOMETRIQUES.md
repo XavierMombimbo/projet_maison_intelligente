@@ -2,6 +2,41 @@
 
 FACE-001 définit le consentement, les droits, le stockage et le retrait des profils. FACE-002 ajoute une recette académique non commerciale avec InsightFace 0.7.3 et les poids officiels ArcFace `buffalo_l`. Aucune photo brute n’est persistée.
 
+## Reconnaissance dans Mode caméra
+
+Avec `BIOMETRIC_WEB_RECOGNITION_ENABLED=True` et le répertoire ArcFace configuré,
+le navigateur conserve la détection personne/animal et envoie sa capture
+d'événement habituelle. Le serveur vérifie la session, les droits caméra, le CSRF,
+la signature et la capture avant de comparer le visage aux profils actifs et
+enrôlés des membres acceptés de cette seule maison. Aucun gabarit, nom, identifiant
+de profil ou score facial n'est renvoyé au navigateur. La capture de l'événement
+conserve son stockage chiffré existant ; aucun portrait ou gabarit supplémentaire
+n'est enregistré par la comparaison.
+
+La comparaison précède la décision d'alerte. Une présence reconnue est conservée
+sans notification ; un franchissement de ligne reste urgent. Un visage non
+exploitable, plusieurs personnes, aucun profil admissible ou un modèle occupé
+produisent un état indisponible distinct d'une personne non reconnue. Cette
+première portée exige une seule personne et un seul visage net dans la capture,
+avec le visage situé dans la boîte de la personne détectée. Les droits et le
+profil reconnu sont revérifiés après l'inférence ; un retrait ou changement de
+version empêche de rendre la présence silencieuse.
+
+L'écran affiche **Dernière vérification faciale**, horodatée, pour la dernière
+capture envoyée : ce n'est pas une identification continue de chaque cadre vidéo.
+La vérification se renouvelle à l'événement suivant, avec le délai de 15 secondes
+déjà appliqué par Mode caméra. Le contrat signé entrant reste v2 ; le résultat
+calculé par le serveur est enregistré séparément dans `face_verification`
+(`source=server`), puis repris dans les statuts d'événement existants. Le serveur
+refuse tout statut facial fourni par un jeton navigateur. Une retransmission
+identique retrouve le résultat initial sans relancer la comparaison.
+
+Recette : libérer la webcam de la passerelle autonome, ouvrir Mode caméra avec
+le compte autorisé, puis démarrer l'aperçu et rester seul de face dans la zone.
+Vérifier « Profil reconnu · présence silencieuse » et l'historique sans nouvelle
+notification. Arrêter immédiatement doit fermer la webcam et empêcher un résultat
+tardif de réapparaître. L'enrôlement déjà accepté ne doit pas être refait.
+
 ## Consentement et droits
 
 - Seul un membre accepté peut créer son propre profil dans une maison.
