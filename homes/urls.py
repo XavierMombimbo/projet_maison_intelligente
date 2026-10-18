@@ -1,5 +1,6 @@
 from django.urls import path
 from notifications.views import CameraPushPreferenceView
+from .facial_views import FacialEnrollmentView
 
 from .views import (
     CameraCreateView,
@@ -44,6 +45,11 @@ urlpatterns = [
         "<int:maison_pk>/profils-biometriques/",
         ProfilBiometriqueListCreateView.as_view(),
         name="biometric-profile-list",
+    ),
+    path(
+        "<int:maison_pk>/profils-biometriques/<uuid:profile_pk>/enroler/",
+        FacialEnrollmentView.as_view(),
+        name="biometric-profile-enroll",
     ),
     path(
         "<int:maison_pk>/profils-biometriques/<uuid:profile_pk>/exporter/",

@@ -83,6 +83,8 @@ if not DEBUG and BIOMETRIC_ENCRYPTION_KEY == DEVELOPMENT_BIOMETRIC_KEY:
     raise RuntimeError("A separate BIOMETRIC_ENCRYPTION_KEY is required in production.")
 BIOMETRIC_CACHE_TTL_SECONDS = int(os.getenv("BIOMETRIC_CACHE_TTL_SECONDS", "300"))
 BIOMETRIC_TEMPLATE_MAX_BYTES = int(os.getenv("BIOMETRIC_TEMPLATE_MAX_BYTES", "65536"))
+BIOMETRIC_WEB_ENROLLMENT_ENABLED = env_bool("BIOMETRIC_WEB_ENROLLMENT_ENABLED", False)
+BIOMETRIC_FACE_MODEL_ROOT = os.getenv("BIOMETRIC_FACE_MODEL_ROOT", "").strip()
 if BIOMETRIC_CACHE_TTL_SECONDS < 30 or BIOMETRIC_TEMPLATE_MAX_BYTES < 1:
     raise RuntimeError("Biometric cache and template limits are invalid.")
 MFA_PREAUTH_TTL_SECONDS = int(os.getenv("MFA_PREAUTH_TTL_SECONDS", "300"))
@@ -346,6 +348,7 @@ REST_FRAMEWORK = {
 }
 
 RATE_LIMITS = {
+    "biometric_enrollment": (5, 300),
     "login": (int(os.getenv("RATE_LIMIT_LOGIN_COUNT", "10")), 300),
     "signup": (int(os.getenv("RATE_LIMIT_SIGNUP_COUNT", "5")), 3600),
     "password_reset": (int(os.getenv("RATE_LIMIT_PASSWORD_RESET_COUNT", "5")), 3600),

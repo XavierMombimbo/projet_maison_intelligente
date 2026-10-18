@@ -3,6 +3,7 @@ import json
 from datetime import timedelta
 
 from cryptography.exceptions import InvalidTag
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import PermissionDenied
@@ -162,9 +163,12 @@ class ProfilBiometriqueListCreateView(LoginRequiredMixin, View):
             maison=self.maison,
             utilisateur=self.request.user,
             statut=StatutProfilBiometrique.ACTIF,
-        ).exists()
+        ).first()
         return {
             "maison": self.maison,
+            "mon_profil": own_active,
+            "web_enrollment": (settings.BIOMETRIC_WEB_ENROLLMENT_ENABLED
+                               and bool(settings.BIOMETRIC_FACE_MODEL_ROOT)),
             "profils": ProfilBiometrique.objects.visible_to(self.request.user).filter(
                 maison=self.maison
             ),
@@ -206,6 +210,8 @@ class ProfilBiometriqueListCreateView(LoginRequiredMixin, View):
             request,
             "Votre consentement est enregistré. L’enrôlement facial reste en attente.",
         )
+        if settings.BIOMETRIC_WEB_ENROLLMENT_ENABLED and settings.BIOMETRIC_FACE_MODEL_ROOT:
+            return redirect("biometric-profile-enroll", maison_pk=self.maison.pk, profile_pk=profile.pk)
         return redirect("biometric-profile-list", maison_pk=self.maison.pk)
 
 

@@ -3,15 +3,49 @@
 {% block content %}
 <div class="page-heading">
   <div>
-    <p class="eyebrow">Données sensibles</p>
+    <p class="eyebrow">Reconnaissance faciale</p>
     <h1>Profils volontaires</h1>
     <p>{{ maison.nom }} · Chaque personne crée et retire son propre profil.</p>
   </div>
   <a class="button secondary" href="{% url 'maison-detail' maison.pk %}">Retour à la maison</a>
 </div>
 
-<section>
-  <div class="section-heading"><h2>Profils visibles</h2></div>
+{% if mon_profil %}
+<section class="face-profile-card">
+  <h2>Mon profil facial</h2>
+  {% if mon_profil.est_enrole %}
+    <p>Votre visage est enregistré. Les caméras de cette maison peuvent reconnaître votre présence.</p>
+  {% else %}
+    <p>Votre accord est enregistré. Il reste à enregistrer votre visage avec la caméra.</p>
+    {% if web_enrollment %}<a class="button" href="{% url 'biometric-profile-enroll' maison.pk mon_profil.pk %}">Enregistrer mon visage</a>{% else %}<p class="helptext">L’enregistrement du visage sera disponible lorsque le service sera prêt.</p>{% endif %}
+  {% endif %}
+</section>
+{% endif %}
+
+{% if peut_creer %}
+<section class="biometric-consent-form face-profile-card">
+  <h2>Créer mon profil facial</h2>
+  <p>Les caméras de cette maison pourront reconnaître votre présence. Vous pourrez retirer ce profil à tout moment.</p>
+  <form method="post" novalidate>
+    {% csrf_token %}
+    {{ form.non_field_errors }}
+    <div class="biometric-field">
+      <label for="{{ form.libelle.id_for_label }}">{{ form.libelle.label }}</label>
+      {{ form.libelle }}
+      {{ form.libelle.errors }}
+    </div>
+    <div class="biometric-consent-check">
+      {{ form.consentement }}
+      <label for="{{ form.consentement.id_for_label }}">{{ form.consentement.label }}</label>
+    </div>
+    {{ form.consentement.errors }}
+    <button class="button" type="submit">Créer mon profil</button>
+  </form>
+</section>
+{% endif %}
+
+<details class="face-profile-management">
+  <summary>Gérer les profils et mes données</summary>
   <div class="table-wrap">
     <table>
       <thead><tr><th>Profil</th><th>État</th><th>Consentement</th><th>Actions</th></tr></thead>
@@ -34,29 +68,5 @@
       </tbody>
     </table>
   </div>
-</section>
-
-{% if peut_creer %}
-<section class="biometric-consent-form">
-  <p class="eyebrow">Consentement</p>
-  <h2>Créer mon profil</h2>
-  <p>Cette étape enregistre votre accord. Le visage ne sera enrôlé qu’à l’étape technique suivante.</p>
-  <form method="post" novalidate>
-    {% csrf_token %}
-    {{ form.non_field_errors }}
-    <div class="biometric-field">
-      <label for="{{ form.libelle.id_for_label }}">{{ form.libelle.label }}</label>
-      {{ form.libelle }}
-      {% if form.libelle.help_text %}<small>{{ form.libelle.help_text }}</small>{% endif %}
-      {{ form.libelle.errors }}
-    </div>
-    <div class="biometric-consent-check">
-      {{ form.consentement }}
-      <label for="{{ form.consentement.id_for_label }}">{{ form.consentement.label }}</label>
-    </div>
-    {{ form.consentement.errors }}
-    <button class="button" type="submit">Créer mon profil volontaire</button>
-  </form>
-</section>
-{% endif %}
+</details>
 {% endblock %}

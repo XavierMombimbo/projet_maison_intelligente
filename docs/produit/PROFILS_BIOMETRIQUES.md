@@ -10,7 +10,23 @@ FACE-001 définit le consentement, les droits, le stockage et le retrait des pro
 - La personne concernée peut exporter ses propres données et retirer son profil à tout moment.
 - La création, l’export, le retrait, la synchronisation et les confirmations de purge sont audités sans gabarit ni donnée faciale.
 
-L’écran se trouve dans **Maison → Profils volontaires**. La création enregistre le consentement `face-profile-v1`. La personne concernée récupère l’UUID de son propre profil dans son export, puis l’opérateur de la passerelle effectue l’enrôlement local avec son accord.
+L’écran se trouve dans **Maison → Profils volontaires**. La création enregistre le consentement `face-profile-v1`. Lorsque le service web est activé, elle mène directement à **Enregistrer mon visage**. Un profil en attente peut reprendre cette étape depuis la même page, sans export d’identifiant ni commande technique. Le parcours local en console reste disponible pour la recette de passerelle.
+
+## Enrôlement depuis la plateforme
+
+1. Le membre accepté crée son propre profil et donne son accord.
+2. Il confirme l’envoi d’une capture puis clique sur **Ouvrir ma caméra**. Aucune caméra ni aucun microphone ne s’active automatiquement.
+3. Il se place seul, de face et bien éclairé, puis clique sur **Enregistrer mon visage**. La caméra est fermée immédiatement après la capture ; un message confirme le résultat.
+
+Une seule image JPEG est envoyée en HTTPS au serveur de la plateforme, puis traitée en mémoire. Le serveur utilise les poids ArcFace officiels déjà approuvés dans le cadre académique non commercial ; il conserve uniquement le gabarit normalisé de 2 048 octets, chiffré comme les profils locaux. Aucun service externe ne reçoit l’image. Les modèles d’âge et de genre ne sont pas utilisés dans ce parcours.
+
+La capture est limitée à 384 Kio et le corps JSON à 530 Kio. Une protection ASGI dédiée rejette les corps excessifs avant la mise en tampon de Django, y compris sans en-tête Content-Length. Les images non JPEG, dimensions excessives, visages absents ou multiples sont refusés. Le serveur ne conserve pas de photo ; le navigateur ne crée ni fichier ni stockage local de capture.
+
+Seule la personne concernée peut enrôler son profil actif ; le propriétaire ne peut pas le faire à sa place. Les droits et l’état du consentement sont revérifiés après l’inférence, avant écriture sous verrou. Une capture ne remplace pas silencieusement un profil déjà enrôlé. Les requêtes sont protégées par session, MFA existante, CSRF, cinq essais par cinq minutes et réponses `no-store`. L’audit contient seulement le format et l’origine web, jamais l’image ou le vecteur.
+
+Configuration serveur : `BIOMETRIC_WEB_ENROLLMENT_ENABLED=True` et `BIOMETRIC_FACE_MODEL_ROOT` vers le répertoire externe approuvé contenant `models/buffalo_l`. Le contrôle du registre et des empreintes précède le chargement du modèle ; un seul traitement est admis à la fois par processus. Le modèle reste en mémoire pour les demandes suivantes. Aucun téléchargement de poids n’est effectué par ce parcours.
+
+L’interface affiche une seule action principale à chaque étape. La gestion, l’export et le retrait sont accessibles dans **Gérer les profils et mes données** ; les détails d’usage se trouvent dans **À savoir sur mon profil**. Une reconnaissance n’est pas une preuve de présence réelle et ne commande jamais un accès ni le désarmement de la surveillance.
 
 ## Recette académique ArcFace (FACE-002)
 

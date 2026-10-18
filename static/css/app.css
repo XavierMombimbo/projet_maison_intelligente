@@ -315,6 +315,27 @@ dd { margin: 3px 0 20px; font-size: 1.02rem; font-weight: 580; }
   .mfa-complete-shell .recovery-codes code { font-size: .9rem; letter-spacing: .04em; }
 }
 
+.face-enrollment-shell { max-width: 640px; margin: 16px auto; }
+[data-face-enrollment] [hidden] { display: none !important; }
+.face-enrollment-card, .face-profile-card { padding: 28px; background: var(--panel); border: 1px solid var(--line); border-radius: 16px; }
+.face-enrollment-card { margin-top: 18px; }
+.face-enrollment-card h1 { margin-top: 0; font-size: clamp(1.5rem, 3vw, 2rem); line-height: 1.2; }
+.face-profile-card { max-width: 640px; margin-bottom: 24px; }
+.face-profile-card h2 { margin-top: 0; }
+.face-camera { margin: 20px 0 12px; overflow: hidden; border-radius: 12px; background: var(--ink); }
+.face-camera video { width: 100%; max-height: 360px; display: block; object-fit: contain; transform: scaleX(-1); }
+.face-feedback { min-height: 1.5em; color: var(--ink-soft); }
+.face-consent { margin: 20px 0; }
+.face-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; }
+.face-actions .button { flex: 1; }
+.face-privacy { margin: 20px 0 8px; color: var(--ink-soft); font-size: .9rem; }
+.face-more summary, .face-profile-management summary { min-height: 44px; padding: 10px 0; cursor: pointer; font-weight: 650; }
+.face-more { color: var(--ink-soft); font-size: .9rem; }
+.face-profile-management { margin-top: 24px; }
+.face-profile-management .table-wrap { margin-top: 12px; }
+@media (max-width: 480px) {
+  .face-enrollment-card, .face-profile-card { padding: 22px 18px; }
+}
 .biometric-consent-form {
   max-width: 680px;
   margin-top: 38px;

@@ -111,7 +111,7 @@ class ArcFaceEmbedder:
             raise FaceRecognitionError("Seuil de détection faciale invalide.")
 
     @classmethod
-    def from_model_root(cls, root: str | Path):
+    def from_model_root(cls, root: str | Path, *, allowed_modules=None):
         root = Path(root)
         if not root.is_dir():
             raise FaceRecognitionError("Répertoire ArcFace absent.")
@@ -121,7 +121,8 @@ class ArcFaceEmbedder:
             raise FaceRecognitionError("InsightFace n’est pas installé.") from exc
         try:
             application = FaceAnalysis(
-                name="buffalo_l", root=str(root), providers=["CPUExecutionProvider"]
+                name="buffalo_l", root=str(root), providers=["CPUExecutionProvider"],
+                **({"allowed_modules": list(allowed_modules)} if allowed_modules else {}),
             )
             application.prepare(ctx_id=-1, det_size=(640, 640))
         except Exception as exc:
