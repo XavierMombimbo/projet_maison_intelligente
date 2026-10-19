@@ -9,7 +9,7 @@
   {% csrf_token %}
   {{ form.non_field_errors }}
   <fieldset>
-    <legend>Notifications push sur mes appareils</legend>
+    <legend>Alertes sur mes appareils</legend>
     {% for field in form %}
       <p><label for="{{ field.id_for_label }}">{{ field }} {{ field.label }}</label>{{ field.errors }}</p>
     {% endfor %}

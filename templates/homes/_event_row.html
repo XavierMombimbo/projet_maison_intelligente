@@ -1,0 +1,7 @@
+{% load presentation %}{% with summary=evenement|event_summary %}
+<a id="alert-{{ evenement.pk }}" class="event-row" data-status="{{ evenement.statut }}" href="{% url 'event-detail' evenement.pk %}">
+  <strong>{% if summary.quiet %}Personne reconnue{% else %}{{ summary.title }}{% endif %}</strong>
+  <span>{{ evenement.camera.nom }} · {{ evenement.maison.nom }}</span>
+  <span class="status-pill {{ summary.style }} event-status">{{ summary.badge }}</span>
+  <time datetime="{{ evenement.horodatage|date:'c' }}">{{ evenement.horodatage|date:"d/m/Y à H:i" }}</time>
+</a>{% endwith %}

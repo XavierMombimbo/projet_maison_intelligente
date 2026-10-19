@@ -92,7 +92,7 @@ class DashboardView(LoginRequiredMixin, TemplateView):
             cameras_revoquees=cameras.filter(statut_appairage=StatutAppairage.REVOQUEE).count(),
             evenements_recents=evenements.select_related("camera", "maison").order_by("-horodatage")[:8],
             alertes_nouvelles=evenements_operationnels.filter(
-                statut=StatutEvenement.NOUVEAU
+                statut=StatutEvenement.NOUVEAU, notification_supprimee=False
             ).count(),
             intrusions_confirmees=evenements_operationnels.filter(
                 statut=StatutEvenement.INTRUSION_CONFIRMEE

@@ -2,31 +2,24 @@
 {% load static %}
 {% block title %}Tableau de bord{% endblock %}
 {% block content %}
-<div class="page-heading"><div><p class="eyebrow">Centre de surveillance</p><h1>Bonjour {{ user.username }}</h1><p>Voici l’état de vos espaces protégés aujourd’hui.</p></div><a class="button" href="{% url 'camera-create' %}">Ajouter une caméra</a></div>
+<div class="page-heading"><div><p class="eyebrow">Vue d’ensemble</p><h1>Bonjour {{ user.username }}</h1><p>Vos caméras et les événements à vérifier, en un coup d’œil.</p></div><a class="button" href="{% url 'camera-create' %}">Ajouter une caméra</a></div>
 <section id="realtime-alerts" class="realtime-bar" data-ws-path="/ws/alerts/" aria-label="État des alertes en temps réel">
   <div><span id="ws-indicator" class="connection-dot is-connecting" aria-hidden="true"></span><strong id="ws-state">Connexion aux alertes en temps réel…</strong></div>
   <button id="sound-toggle" class="button secondary" type="button" aria-pressed="false">Activer la sirène</button>
 </section>
-<section class="stats">
-  <article><span>Maisons protégées</span><strong>{{ maisons|length }}</strong></article>
-  <article><span>Caméras visibles</span><strong>{{ nombre_cameras }}</strong></article>
-  <article><span>Caméras connectées</span><strong>{{ cameras_connectees }}</strong></article>
-  <article><span>Caméras hors ligne</span><strong>{{ cameras_hors_ligne }}</strong></article>
-  <article><span>Surveillance active</span><strong>{{ cameras_actives }}</strong></article>
+<section class="stats" aria-label="En un coup d’œil">
   <article class="stat-alert"><span>Alertes à vérifier</span><strong id="new-alert-count">{{ alertes_nouvelles }}</strong></article>
-  <article class="stat-danger"><span>Intrusions confirmées</span><strong id="confirmed-alert-count">{{ intrusions_confirmees }}</strong></article>
-  <article><span>Caméras révoquées</span><strong>{{ cameras_revoquees }}</strong></article>
+  <article><span>Caméras en ligne</span><strong>{{ cameras_connectees }} <small>/ {{ nombre_cameras }}</small></strong></article>
+  <article><span>Caméras hors ligne</span><strong>{{ cameras_hors_ligne }}</strong></article>
+  <article><span>Mes maisons</span><strong>{{ maisons|length }}</strong></article>
 </section>
-<section class="alerts-section"><div class="section-heading"><h2>Alertes récentes</h2><a href="{% url 'event-list' %}">Ouvrir l’historique</a></div>
+<details class="disclosure compact-disclosure"><summary>Plus d’informations</summary><div class="disclosure-body"><dl class="inline-facts"><div><dt>Surveillance activée dans les réglages</dt><dd>{{ cameras_actives }} caméra{{ cameras_actives|pluralize }}</dd></div><div><dt>Intrusions confirmées</dt><dd id="confirmed-alert-count">{{ intrusions_confirmees }}</dd></div><div><dt>Accès caméra retirés</dt><dd>{{ cameras_revoquees }}</dd></div></dl></div></details>
+
+<section class="alerts-section"><div class="section-heading"><h2>Événements récents</h2><a href="{% url 'event-list' %}">Ouvrir l’historique</a></div>
   <div id="recent-alerts" class="event-list">
     {% for evenement in evenements_recents %}
-      <a id="alert-{{ evenement.pk }}" class="event-row" data-status="{{ evenement.statut }}" href="{% url 'event-detail' evenement.pk %}">
-        <strong>{{ evenement.get_type_display }}</strong>
-        <span>{{ evenement.camera.nom }} · {{ evenement.maison.nom }} · {{ evenement.get_priorite_alerte_display }}</span>
-        <span class="status-pill {{ evenement.statut }} event-status">{{ evenement.get_statut_display }}</span>
-        <time datetime="{{ evenement.horodatage|date:'c' }}">{{ evenement.horodatage|date:"d/m/Y H:i" }}</time>
-      </a>
-    {% empty %}<div id="no-alerts" class="empty">Aucune alerte pour vos caméras autorisées.</div>{% endfor %}
+{% include "homes/_event_row.html" %}
+    {% empty %}<div id="no-alerts" class="empty">Aucun événement pour le moment.</div>{% endfor %}
   </div>
 </section>
 <section><div class="section-heading"><h2>Caméras récentes</h2><a href="{% url 'camera-list' %}">Tout afficher</a></div>

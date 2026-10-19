@@ -1,3 +1,16 @@
 {% extends "base.html" %}
 {% block title %}{{ form_title|default:"Configuration" }}{% endblock %}
-{% block content %}<div class="auth-shell"><div class="auth-context"><p class="eyebrow">Configuration sécurisée</p><h1>{{ form_title|default:"Ajouter" }}</h1><p class="lead">{{ form_intro|default:"Renseignez les informations nécessaires pour continuer." }}</p></div><section class="auth-card"><p class="eyebrow">{{ form_eyebrow|default:"Configuration" }}</p><h2>{{ form_title|default:"Ajouter" }}</h2><form method="post" novalidate>{% csrf_token %}{{ form.as_p }}<button class="button" type="submit">{{ submit_label|default:"Enregistrer" }}</button></form></section></div>{% endblock %}
+{% block content %}<div class="form-page"><div class="page-heading"><div><h1>{{ form_title|default:"Ajouter" }}</h1><p>{{ form_intro|default:"Renseignez les informations ci-dessous." }}</p></div></div><section class="card"><form method="post" novalidate>{% csrf_token %}
+{% if form.adresse_rtsp %}
+  {{ form.non_field_errors }}
+  {% include "includes/form_field.html" with field=form.maison %}
+  {% include "includes/form_field.html" with field=form.nom %}
+  {% include "includes/form_field.html" with field=form.type_source label="Type de caméra" %}
+  <details class="disclosure"{% if form.errors or form.type_source.value == 'rtsp' %} open{% endif %}><summary>Connexion d’une caméra réseau (RTSP)</summary><div class="disclosure-body">
+    <p class="muted">Uniquement pour une caméra réseau. Pour une webcam, laissez ces champs vides.</p>
+    {% include "includes/form_field.html" with field=form.adresse_rtsp label="Adresse de la caméra" %}
+    {% include "includes/form_field.html" with field=form.utilisateur_rtsp label="Nom d’utilisateur de la caméra" %}
+    {% include "includes/form_field.html" with field=form.mot_de_passe_rtsp label="Mot de passe de la caméra" %}
+  </div></details>
+{% else %}{{ form.as_p }}{% endif %}
+<button class="button" type="submit">{{ submit_label|default:"Enregistrer" }}</button></form></section></div>{% endblock %}

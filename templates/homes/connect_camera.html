@@ -2,23 +2,23 @@
 {% load static %}
 {% block title %}Connecter cet ordinateur{% endblock %}
 {% block content %}
-<div class="auth-shell pairing-layout"><div class="auth-context"><p class="eyebrow">Passerelle IoT</p><h1>Transformez cet ordinateur en caméra.</h1><p class="lead">L’appairage rattache cette webcam à une seule maison. Aucun flux vidéo continu ne sera envoyé.</p></div><section class="auth-card pairing-connect">
+<div class="form-page"><section class="auth-card pairing-connect">
   {% if paired %}
-    <p class="eyebrow">Appairage réussi</p>
+    <p class="eyebrow">Connexion réussie</p>
     <h1>{{ camera.nom }} est connectée</h1>
-    <p>Cet ordinateur possède maintenant une identité caméra propre, limitée à <strong>{{ camera.maison.nom }}</strong>.</p>
+    <p>Cette webcam est rattachée à <strong>{{ camera.maison.nom }}</strong>.</p>
     <div id="credential-status" class="notice">Enregistrement sécurisé de l’identité dans ce navigateur…</div>
     {{ device_credentials|json_script:"camera-credentials" }}
-    <a class="button" href="{% url 'camera-monitor' %}">Ouvrir la surveillance locale</a>
+    <a class="button" href="{% url 'camera-monitor' %}">Ouvrir le mode caméra</a>
   {% else %}
     <p class="eyebrow">Ordinateur-caméra</p>
     <h1>Connecter cet ordinateur</h1>
     <p>Saisissez le code temporaire affiché par le propriétaire. La webcam ne sera pas activée pendant cette étape.</p>
     <form method="post" novalidate>
       {% csrf_token %}{{ form.as_p }}
-      <button class="button" type="submit">Appairer la caméra</button>
+      <button class="button" type="submit">Connecter la caméra</button>
     </form>
-    <p class="muted">Le code expire après cinq minutes et devient inutilisable après ce premier appairage.</p>
+    <p class="muted">Le code expire après cinq minutes et devient inutilisable après cette connexion.</p>
   {% endif %}
 </section></div>
 {% endblock %}

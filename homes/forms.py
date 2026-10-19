@@ -257,6 +257,10 @@ class CameraForm(forms.ModelForm):
     def __init__(self, *args, user=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["maison"].queryset = Maison.objects.filter(proprietaire=user)
+        self.fields["type_source"].choices = [
+            (TypeSourceCamera.WEBCAM, "Webcam d’un ordinateur"),
+            (TypeSourceCamera.RTSP, "Caméra réseau (RTSP)"),
+        ]
 
     def clean(self):
         cleaned = super().clean()

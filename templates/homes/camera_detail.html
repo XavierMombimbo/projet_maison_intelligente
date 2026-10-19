@@ -1,12 +1,13 @@
 {% extends "base.html" %}
+{% load presentation %}
 {% block title %}{{ camera.nom }}{% endblock %}
 {% block content %}
 <p class="eyebrow">{{ camera.maison.nom }}</p>
 <div class="page-heading">
-  <div><h1>{{ camera.nom }}</h1><p>Contrôlez son identité, sa disponibilité et la surveillance.</p></div>
+  <div><h1>{{ camera.nom }}</h1><p>Vérifiez son état et choisissez comment surveiller.</p></div>
   {% if camera.maison.proprietaire == user and camera.statut_appairage == "unpaired" %}
     <form method="post" action="{% url 'pairing-code-create' camera.pk %}">
-      {% csrf_token %}<button class="button" type="submit">Générer le code d’appairage</button>
+      {% csrf_token %}<button class="button" type="submit">Obtenir le code de connexion</button>
     </form>
   {% elif camera.statut_appairage == "paired" and camera.type_source == "webcam" %}
     <a class="button" href="{% url 'camera-monitor' %}?camera={{ camera.pk }}">Ouvrir le mode caméra</a>
@@ -15,6 +16,25 @@
 <section class="detail-grid">
   <article class="card">
     <h2>État</h2>
+    <p class="camera-state"><span class="status-pill {% if not camera.est_connectee or not camera.surveillance_appliquee %}neutral{% endif %}">{{ camera|camera_summary }}</span></p>
+    <p class="muted">Dernière connexion : {{ camera.derniere_connexion|date:"d/m/Y à H:i"|default:"pas encore connectée" }}.</p>
+    <p>Surveillance {% if camera.surveillance_active %}activée{% else %}en pause{% endif %} dans les réglages.</p>
+
+    {% if camera.maison.proprietaire == user and camera.statut_appairage == "paired" %}
+      <div class="action-stack">
+        <form method="post" action="{% url 'camera-toggle' camera.pk %}">
+          {% csrf_token %}<button class="button" type="submit">{% if camera.surveillance_active %}Désactiver{% else %}Activer{% endif %} la surveillance</button>
+        </form>
+        <a class="button secondary" href="{% url 'camera-push-preferences' camera.pk %}">Mes notifications</a>
+
+      </div>
+    {% elif camera.statut_appairage == "revoked" %}
+      <p class="error">L’accès de cette caméra a été retiré. Elle ne peut plus transmettre d’événements.</p>
+    {% endif %}
+  </article>
+  <article class="card preview"><span class="camera-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M15 10l4.5-2.5v9L15 14"/><rect x="3" y="6" width="12" height="12" rx="3"/></svg></span><h2>Aperçu protégé</h2><p>Le flux vidéo n’est pas diffusé sur cette page. Retrouvez les images enregistrées dans les événements ci-dessous.</p>{% if camera.statut_appairage == 'paired' and camera.type_source == 'webcam' %}<a class="button secondary" href="{% url 'camera-monitor' %}?camera={{ camera.pk }}">Ouvrir le mode caméra</a>{% endif %}</article>
+</section>
+<details class="disclosure"><summary>Réglages et détails avancés</summary><div class="disclosure-body">
     <dl>
       <dt>Appairage</dt><dd><span class="status-pill {% if camera.statut_appairage == 'revoked' %}confirmed{% elif camera.statut_appairage == 'unpaired' %}false_alarm{% endif %}">{{ camera.get_statut_appairage_display }}</span></dd>
       <dt>Source</dt><dd>{{ camera.get_type_source_display }}</dd>
@@ -33,34 +53,16 @@
       {% if camera.date_appairage %}<dt>Appairée le</dt><dd>{{ camera.date_appairage }}</dd>{% endif %}
       {% if camera.date_revocation %}<dt>Révoquée le</dt><dd>{{ camera.date_revocation }}</dd>{% endif %}
     </dl>
-    {% if camera.maison.proprietaire == user and camera.statut_appairage == "paired" %}
-      <div class="action-stack">
-        <a class="button secondary" href="{% url 'camera-analysis-update' camera.pk %}">Configurer la détection</a>
-        <a class="button secondary" href="{% url 'camera-evaluation' camera.pk %}">Évaluation terrain</a>
-        <form method="post" action="{% url 'camera-toggle' camera.pk %}">
-          {% csrf_token %}<button class="button" type="submit">{% if camera.surveillance_active %}Désactiver{% else %}Activer{% endif %} la surveillance</button>
-        </form>
+{% if camera.maison.proprietaire == user and camera.statut_appairage == "paired" %}<div class="page-actions">
+<a class="button secondary" href="{% url 'camera-analysis-update' camera.pk %}">Configurer la détection</a><a class="button secondary" href="{% url 'camera-evaluation' camera.pk %}">Évaluation terrain</a>
         <form method="post" action="{% url 'camera-revoke' camera.pk %}" data-confirm="Révoquer définitivement cette caméra ?">
           {% csrf_token %}<button class="button danger" type="submit">Révoquer la caméra</button>
-        </form>
-      </div>
-    {% elif camera.statut_appairage == "revoked" %}
-      <p class="error">Cette identité est révoquée. Ses anciens jetons et son secret ne sont plus valides.</p>
-    {% endif %}
-  </article>
-  <article class="card preview"><span class="camera-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M15 10l4.5-2.5v9L15 14"/><rect x="3" y="6" width="12" height="12" rx="3"/></svg></span><h2>Aperçu protégé</h2><p>Le flux reste sur la passerelle et n’est jamais diffusé ici en continu. Les identifiants RTSP sont chiffrés et ne sont jamais affichés.</p>{% if camera.statut_appairage == 'paired' and camera.type_source == 'webcam' %}<a class="button secondary" href="{% url 'camera-monitor' %}?camera={{ camera.pk }}">Ouvrir le mode caméra</a>{% endif %}</article>
-</section>
+        </form></div>{% endif %}</div></details>
 <section class="events-section">
-  <p><a class="button secondary" href="{% url 'camera-push-preferences' camera.pk %}">Mes notifications</a></p>
   <div class="section-heading"><h2>Détections récentes</h2><a href="{% url 'event-list' %}">Historique complet</a></div>
   <div class="event-list">
     {% for evenement in evenements %}
-      <a class="event-row" href="{% url 'event-detail' evenement.pk %}">
-        <span>{{ evenement.get_type_display }}</span>
-        <span>{{ evenement.get_priorite_alerte_display }} · confiance {% widthratio evenement.confiance_ia 1 100 %} %</span>
-        <span class="status-pill {{ evenement.statut }}">{{ evenement.get_statut_display }}</span>
-        <time datetime="{{ evenement.horodatage|date:'c' }}">{{ evenement.horodatage|date:"d/m/Y H:i" }}</time>
-      </a>
+{% include "homes/_event_row.html" %}
     {% empty %}<div class="empty">Aucune détection transmise.</div>{% endfor %}
   </div>
 </section>

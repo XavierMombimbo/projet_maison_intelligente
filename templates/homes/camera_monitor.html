@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% load static %}
-{% block title %}Surveillance locale{% endblock %}
+{% block title %}Mode caméra{% endblock %}
 {% block content %}
 <section class="monitor-shell" id="camera-monitor"
   data-requested-camera-id="{{ requested_camera_id }}"
@@ -17,7 +17,7 @@
   data-yolo-model-url="{% static 'vendor/yolo/yolo11n.onnx' %}"
   data-yolo-wasm-url="{% static 'vendor/yolo/ort-wasm-simd-threaded.wasm' %}">
   <div class="page-heading">
-    <div><p class="eyebrow">Surveillance et confidentialité</p><h1 id="camera-title">Ordinateur-caméra</h1><p>Surveillez l’image et contrôlez la transmission des événements.</p></div>
+    <div><h1 id="camera-title">Mode caméra</h1><p>Démarrez la webcam pour surveiller cet espace.</p></div>
     <span class="monitor-badge" id="monitoring-state">Initialisation…</span>
   </div>
   <div class="privacy-banner">
@@ -25,7 +25,7 @@
     <div><strong>La webcam reste désactivée jusqu’à votre clic.</strong><span>Le flux vidéo est analysé ici et n’est jamais diffusé en continu. Seule une capture liée à une détection est envoyée.</span></div>
   </div>
   {% if web_face_recognition %}
-  <p class="control-feedback">Reconnaissance faciale activée : à chaque événement, la capture est comparée sur le serveur aux profils volontaires de cette maison. Une présence reconnue reste silencieuse, sauf franchissement de ligne. Placez-vous seul, de face et bien éclairé. Arrêtez la passerelle autonome si elle utilise cette même webcam.</p>
+  <p class="control-feedback">Reconnaissance faciale activée : chaque capture est comparée sur le serveur aux visages enregistrés de cette maison. Une personne reconnue ne déclenche pas d’alerte de présence. Les passages interdits restent signalés.</p>
   {% endif %}
   <div class="monitor-grid">
     <div class="video-stage" aria-label="Aperçu local de la webcam">
@@ -35,22 +35,27 @@
       <span class="live-indicator" id="live-indicator" hidden><span aria-hidden="true">●</span> Webcam active</span>
     </div>
     <aside class="monitor-controls" aria-labelledby="controls-title">
-      <div class="controls-heading"><div><p class="eyebrow">Pilotage local</p><h2 id="controls-title">Contrôles</h2></div><span class="status-dot offline" id="control-status-dot" aria-hidden="true"></span></div>
-      <p id="camera-status" class="control-feedback" role="status" aria-live="polite">Recherche de l’identité appairée…</p>
+      <div class="controls-heading"><div><h2 id="controls-title">Ma webcam</h2></div><span class="status-dot offline" id="control-status-dot" aria-hidden="true"></span></div>
+      <p id="camera-status" class="control-feedback" role="status" aria-live="polite">Recherche de la caméra…</p>
       <form method="post" action="#" id="monitoring-toggle-form" hidden>{% csrf_token %}<input type="hidden" name="return_to" value="monitor"><button class="button secondary" id="monitoring-toggle-button" type="submit">Modifier la surveillance</button></form>
       <div class="control-section"><span class="control-label">Webcam</span><button class="button" id="start-camera" type="button"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 10 4.5-2.5v9L15 14"/><rect x="3" y="6" width="12" height="12" rx="3"/></svg>Autoriser et démarrer la webcam</button><button class="button secondary" id="stop-camera" type="button" disabled>Arrêter immédiatement</button></div>
       {% if user.is_authenticated %}<div class="control-section"><span class="control-label">Alertes</span><div id="realtime-alerts" class="monitor-realtime" data-ws-path="/ws/alerts/"><span id="ws-indicator" class="connection-dot is-connecting" aria-hidden="true"></span><span id="ws-state">Connexion aux alertes…</span></div><button class="button secondary alert-sound-button" id="sound-toggle" type="button" aria-pressed="false">Activer la sirène</button></div>{% endif %}
-      <dl class="monitor-metrics">
-        <dt>Modèle IA</dt><dd id="model-state">Non chargé</dd>
-        <dt>Classes et seuils</dt><dd id="thresholds-state">Personne ≥ 45 % · Chien ≥ 50 % · Chat ≥ 50 %</dd>
-        <dt>Zone active</dt><dd id="analysis-state">Image complète</dd>
-        <dt>Règles actives</dt><dd id="rules-state">Initialisation…</dd>
-        <dt>Suivi temporel</dt><dd id="stability-state">0 piste dans la zone</dd>
-        <dt>Dernier événement</dt><dd id="last-event">Aucun</dd>
-        <dt>Dernière vérification faciale</dt><dd id="face-result" role="status" aria-live="polite">{% if web_face_recognition %}En attente d’un événement{% else %}Non activée sur ce serveur{% endif %}</dd>
+      <dl class="monitor-result">
+        <dt>Dernier événement</dt><dd id="last-event">Aucun pour le moment</dd>
+        <dt>Reconnaissance faciale</dt><dd id="face-result" role="status" aria-live="polite">{% if web_face_recognition %}En attente d’un événement{% else %}Non activée{% endif %}</dd>
       </dl>
-      <a class="text-link" href="#" id="analysis-settings-link" hidden>Configurer les règles de cette caméra</a>
-      <a class="text-link" href="{% url 'connect-camera' %}" id="pairing-link" hidden>Appairer d’abord cet ordinateur</a>
+      <details class="disclosure"><summary>Détails de l’analyse</summary><div class="disclosure-body">
+        <dl class="monitor-metrics">
+          <dt>Modèle IA</dt><dd id="model-state">Non chargé</dd>
+          <dt>Classes et seuils</dt><dd id="thresholds-state">Personne ≥ 45 % · Chien ≥ 50 % · Chat ≥ 50 %</dd>
+          <dt>Zone active</dt><dd id="analysis-state">Image complète</dd>
+          <dt>Règles actives</dt><dd id="rules-state">Initialisation…</dd>
+          <dt>Suivi temporel</dt><dd id="stability-state">0 piste dans la zone</dd>
+        </dl>
+        <p>Pour faciliter la reconnaissance, placez-vous de face et bien éclairé. Un seul programme peut utiliser la webcam à la fois.</p>
+        <a class="text-link" href="#" id="analysis-settings-link" hidden>Configurer la détection</a>
+      </div></details>
+      <a class="text-link" href="{% url 'connect-camera' %}" id="pairing-link" hidden>Connecter cet ordinateur</a>
     </aside>
   </div>
 </section>

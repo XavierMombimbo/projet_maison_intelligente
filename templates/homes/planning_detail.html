@@ -18,14 +18,15 @@
     {% if planning_quotidien and planning_quotidien.heure_debut > planning_quotidien.heure_fin %}<p class="muted">L’arrêt a lieu le lendemain.</p>{% endif %}
   </article>
   <article class="card">
-    <h2>Décision actuelle</h2>
+    <h2>État prévu</h2>
     <p><span class="status-pill {% if decision.active %}confirmed{% else %}false_alarm{% endif %}">{% if decision.active %}Surveillance demandée{% else %}Surveillance arrêtée{% endif %}</span></p>
-    <dl><dt>Règle appliquée</dt><dd>{{ decision.libelle }}</dd><dt>Priorité</dt><dd>{{ decision.source }}</dd></dl>
+    <dl><dt>Règle appliquée</dt><dd>{{ decision.libelle }}</dd></dl>
   </article>
 </section>
 
-<details>
+<details class="disclosure">
   <summary>Options avancées</summary>
+<div class="disclosure-body">
   <section>
     <div class="section-heading"><h2>Fuseau horaire</h2></div>
     {% if est_proprietaire %}<form class="card" method="post" action="{% url 'planning-timezone-update' maison.pk %}">{% csrf_token %}{{ fuseau_form.as_p }}<button class="button secondary" type="submit">Enregistrer</button></form>{% else %}<p>{{ maison.fuseau_horaire }}</p>{% endif %}
@@ -49,5 +50,5 @@
   {% for exception in maison.exceptions_surveillance.all %}<tr><td>{{ exception.nom }}</td><td>{{ exception.date_debut|date:"d/m/Y H:i" }}</td><td>{{ exception.date_fin|date:"d/m/Y H:i" }}</td><td>{% if exception.surveillance_active %}Activer{% else %}Désactiver{% endif %}</td><td>{{ exception.priorite }}</td>{% if est_proprietaire %}<td><a href="{% url 'schedule-exception-update' maison.pk exception.pk %}">Modifier</a><form method="post" action="{% url 'schedule-exception-delete' maison.pk exception.pk %}" data-confirm="Supprimer cette exception ?">{% csrf_token %}<button class="link-button" type="submit">Supprimer</button></form></td>{% endif %}</tr>{% empty %}<tr><td colspan="6">Aucune exception.</td></tr>{% endfor %}
   </tbody></table></div>{% endtimezone %}
 </section>
-</details>
+</div></details>
 {% endblock %}

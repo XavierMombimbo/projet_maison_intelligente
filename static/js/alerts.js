@@ -12,7 +12,7 @@
   const count = document.getElementById("new-alert-count");
   const confirmedCount = document.getElementById("confirmed-alert-count");
   const statusLabels = {
-    new: "Nouveau",
+    new: "À vérifier",
     false_alarm: "Fausse alerte",
     confirmed: "Intrusion confirmée",
   };
@@ -102,7 +102,7 @@
     const title = document.createElement("strong");
     title.textContent = alertTitle(payload);
     const details = document.createElement("span");
-    details.textContent = `${payload.camera_name} · ${payload.alert_priority_label || "Priorité normale"} · confiance ${Math.round(Number(payload.confidence) * 100)} %`;
+    details.textContent = `${payload.camera_name} · ${payload.house_name}`;
     const link = document.createElement("a");
     link.href = safeDetailUrl(payload.detail_url);
     link.textContent = "Vérifier l’alerte";
@@ -128,7 +128,7 @@
     const title = document.createElement("strong");
     title.textContent = alertTitle(payload);
     const location = document.createElement("span");
-    location.textContent = `${payload.camera_name} · ${payload.house_name} · ${payload.alert_priority_label || "Priorité normale"}`;
+    location.textContent = `${payload.camera_name} · ${payload.house_name}`;
     const eventStatus = document.createElement("span");
     eventStatus.className = `status-pill ${payload.status} event-status`;
     eventStatus.textContent = statusLabels[payload.status] || payload.status;

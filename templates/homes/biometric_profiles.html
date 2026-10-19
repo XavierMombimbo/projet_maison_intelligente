@@ -3,8 +3,8 @@
 {% block content %}
 <div class="page-heading">
   <div>
-    <p class="eyebrow">Reconnaissance faciale</p>
-    <h1>Profils volontaires</h1>
+
+    <h1>Reconnaissance faciale</h1>
     <p>{{ maison.nom }} · Chaque personne crée et retire son propre profil.</p>
   </div>
   <a class="button secondary" href="{% url 'maison-detail' maison.pk %}">Retour à la maison</a>
@@ -53,12 +53,12 @@
         {% for profil in profils %}
           <tr>
             <td><strong>{{ profil.libelle }}</strong>{% if maison.proprietaire == user %}<br><small>{{ profil.utilisateur.username }}</small>{% endif %}</td>
-            <td>{% if profil.statut == 'revoked' %}Retiré{% elif profil.est_enrole %}Enrôlé{% else %}En attente d’enrôlement{% endif %}</td>
+            <td>{% if profil.statut == 'revoked' %}Retiré{% elif profil.est_enrole %}Visage enregistré{% else %}Visage à enregistrer{% endif %}</td>
             <td>{{ profil.date_consentement|date:"d/m/Y H:i" }}</td>
             <td>
               {% if profil.utilisateur == user %}<a href="{% url 'biometric-profile-export' maison.pk profil.pk %}">Exporter mes données</a>{% endif %}
               {% if profil.statut != 'revoked' and profil.utilisateur == user or profil.statut != 'revoked' and maison.proprietaire == user %}
-                <form method="post" action="{% url 'biometric-profile-revoke' maison.pk profil.pk %}" class="inline-form">{% csrf_token %}<button type="submit" class="link-button" data-confirm="Retirer ce profil et effacer immédiatement son gabarit ?">Retirer</button></form>
+                <form method="post" action="{% url 'biometric-profile-revoke' maison.pk profil.pk %}" class="inline-form">{% csrf_token %}<button type="submit" class="link-button" data-confirm="Retirer ce profil et effacer ses données faciales ?">Retirer</button></form>
               {% endif %}
             </td>
           </tr>
