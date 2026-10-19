@@ -40,6 +40,7 @@ def _event_payload(event: Evenement) -> dict:
         "alert_priority": event.priorite_alerte,
         "alert_priority_label": event.get_priorite_alerte_display(),
         "alert_reason": event.raison_priorite,
+        "notification_suppressed": event.notification_supprimee,
         "created_at": event.horodatage.isoformat(),
         "detail_url": reverse("event-detail", kwargs={"pk": event.pk}),
     }
@@ -53,7 +54,9 @@ def publish_event(event_id, *, message_type: str = "alert.created") -> None:
         .filter(pk=event_id)
         .first()
     )
-    if event is None:
+    # The outbox also records silent presences. It must never turn one into
+    # a browser alert (toast/siren), including when an old entry is retried.
+    if event is None or (message_type == "alert.created" and event.notification_supprimee):
         return
     async_to_sync(get_channel_layer().group_send)(
         alert_group_name(event.maison_id),

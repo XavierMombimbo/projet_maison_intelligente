@@ -4,6 +4,14 @@ FACE-001 définit le consentement, les droits, le stockage et le retrait des pro
 
 ## Reconnaissance dans Mode caméra
 
+Une présence reconnue reste dans l'historique mais n'est pas diffusée comme
+`alert.created` sur le canal WebSocket : ni sirène ni notification visuelle.
+La suppression s'applique aussi aux reprises de boîte d'envoi ; le client web
+ignore également les messages marqués `notification_suppressed=true`.
+Le détail affiche « Présence reconnue · notification silencieuse », sans
+présenter cette présence comme une intrusion à confirmer. Les inconnus et les
+franchissements de ligne conservent leurs alertes.
+
 Avec `BIOMETRIC_WEB_RECOGNITION_ENABLED=True` et le répertoire ArcFace configuré,
 le navigateur conserve la détection personne/animal et envoie sa capture
 d'événement habituelle. Le serveur vérifie la session, les droits caméra, le CSRF,

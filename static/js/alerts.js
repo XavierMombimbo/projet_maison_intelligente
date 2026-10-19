@@ -145,6 +145,7 @@
 
   function handleMessage(payload) {
     if (payload.type === "alert.created") {
+      if (payload.notification_suppressed === true) return;
       if (!payload.event_id || seenCreatedEvents.has(payload.event_id)) return;
       seenCreatedEvents.add(payload.event_id);
       if (seenCreatedEvents.size > 500) {

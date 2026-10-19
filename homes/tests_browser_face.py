@@ -15,6 +15,8 @@ from .alerting import decider_alerte
 from .biometrics import revoke_biometric_profile
 from .facial_enrollment import EnrollmentBusy, EnrollmentUnavailable
 from .models import Evenement, JournalAudit, Maison, MembreMaison, ProfilBiometrique, StatutInvitation
+from .outbox import dispatch_outbox_entry
+from notifications.models import PushDelivery
 
 
 @override_settings(BIOMETRIC_WEB_RECOGNITION_ENABLED=True, BIOMETRIC_FACE_MODEL_ROOT="/fixture-model")
@@ -66,6 +68,38 @@ class BrowserFaceTests(TestCase):
         response = self.submit()
         self.assertEqual(response.json()["face_verification"]["state"], "unknown")
         self.assertTrue(response.json()["notification_sent"])
+
+    def test_silent_browser_event_outbox_never_broadcasts_or_pushes_even_on_retry(self):
+        self.submit()
+        event = Evenement.objects.get()
+        with patch("homes.realtime.get_channel_layer") as channel:
+            dispatch_outbox_entry(event.boite_envoi.pk)
+            dispatch_outbox_entry(event.boite_envoi.pk)
+        channel.assert_not_called()
+        self.assertFalse(PushDelivery.objects.filter(event=event).exists())
+        detail = self.client.get(reverse("event-detail", kwargs={"pk": event.pk}))
+        self.assertContains(detail, "Présence reconnue · notification silencieuse")
+        self.assertNotContains(detail, "alerte principale a expiré")
+        self.assertNotContains(detail, "Confirmer l’intrusion")
+
+    def test_unknown_and_recognized_line_crossing_still_broadcast(self):
+        from .realtime import publish_event
+        from .models import NiveauAlerte
+        from unittest.mock import AsyncMock
+        for state, rule_type in (("unknown", "presence_prolonged"), ("recognized", "line_crossing")):
+            with self.subTest(state=state, rule=rule_type):
+                decision = decider_alerte(self.camera, [{"label": "person", "confidence": .9,
+                    "face_status": state}], {"type": rule_type})
+                event = Evenement.objects.create(camera=self.camera, maison=self.house,
+                    client_event_id=uuid.uuid4(), type="person", confiance_ia=.9,
+                    priorite_alerte=decision.priorite, notification_supprimee=decision.notification_supprimee)
+                with patch("homes.realtime.get_channel_layer") as channel:
+                    channel.return_value.group_send = AsyncMock()
+                    publish_event(event.pk)
+                payload = channel.return_value.group_send.call_args.args[1]["payload"]
+                self.assertFalse(payload["notification_suppressed"])
+                if rule_type == "line_crossing":
+                    self.assertEqual(payload["alert_priority"], NiveauAlerte.URGENTE)
 
     def test_quality_busy_and_model_failure_are_not_unknown(self):
         for error in (FaceQualityError(), EnrollmentBusy(), EnrollmentUnavailable()):
