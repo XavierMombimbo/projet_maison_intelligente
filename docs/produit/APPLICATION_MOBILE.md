@@ -1,5 +1,21 @@
 # Application mobile — web complet et pilote Android
 
+## Logo commun — 21 octobre 2026
+
+Le symbole maison, caméra et ondes provient du SVG de la page publique
+https://smartxcongo.com/sentinelle-maison fournie par l’utilisateur. Ses tracés
+sont conservés et recentrés dans un carré, sans les textes ni le navigateur de
+la capture. Source commune : `static/icons/sentinelle.svg` ; fond #23484c et
+tracés #b5e9db, issus de la tuile originale.
+
+`tools/build_brand_assets.cjs` produit les PNG avec sharp (ou SHARP_MODULE vers
+une installation existante) : favicon, Apple Touch, PWA 192/512 et variantes
+maskable avec marge de sécurité, ressource Flutter, lanceurs Android et iOS,
+images de lancement iOS. Le logo remplace uniquement la marque ; les icônes de
+sécurité, de navigation et d’état conservent leur sens. Le worker hors ligne
+cache seulement sa page publique et ce logo, jamais les pages authentifiées.
+Les nouvelles icônes natives nécessitent une nouvelle compilation/installation.
+
 ## Version web adaptée au téléphone (28 septembre 2026)
 
 Pour répondre à la demande de parité fonctionnelle, les pages Django existantes sont maintenant adaptées au mobile. Cette solution partage les fonctions et autorisations du site ; elle ne remplace pas silencieusement le pilote Flutter. Le choix de distribution définitif reste à valider avec l'utilisateur.

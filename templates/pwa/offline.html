@@ -1,3 +1,4 @@
+{% load static %}
 <!doctype html>
 <html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#0f172a"><title>Connexion interrompue · Sentinelle Maison</title>
 <style>
@@ -9,4 +10,4 @@
   a { display: inline-block; min-height: 44px; padding: 10px 20px; color: white; background: #087a55; border-radius: 8px; text-decoration: none; }
   a:focus-visible { outline: 3px solid #087a55; outline-offset: 4px; }
 </style></head>
-<body><main><h1>Connexion interrompue</h1><p>Reconnectez-vous pour consulter vos caméras et vos alertes à jour.</p><a href="/tableau-de-bord/">Réessayer</a></main></body></html>
+<body><main><img src="{% static 'icons/sentinelle.svg' %}" width="64" height="64" alt="Sentinelle Maison"><h1>Connexion interrompue</h1><p>Reconnectez-vous pour consulter vos caméras et vos alertes à jour.</p><a href="/tableau-de-bord/">Réessayer</a></main></body></html>

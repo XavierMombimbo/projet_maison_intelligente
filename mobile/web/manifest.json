@@ -1,11 +1,11 @@
 {
-    "name": "sentinelle_mobile",
-    "short_name": "sentinelle_mobile",
+    "name": "Sentinelle Maison",
+    "short_name": "Sentinelle",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#f2f6f5",
+    "theme_color": "#23484c",
+    "description": "Votre espace de surveillance Sentinelle Maison.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

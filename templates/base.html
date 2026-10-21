@@ -8,20 +8,22 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <link rel="manifest" href="{% url 'app-manifest' %}">
   <link rel="icon" href="{% static 'icons/sentinelle.svg' %}" type="image/svg+xml">
+  <link rel="icon" href="{% static 'icons/favicon-32.png' %}" type="image/png" sizes="32x32">
+  <link rel="apple-touch-icon" href="{% static 'icons/apple-touch-icon.png' %}" sizes="180x180">
   <title>{% block title %}Sentinelle Maison{% endblock %}</title>
   <link rel="stylesheet" href="{% static 'css/app.css' %}?v=20261018-face-web1">
   <link rel="stylesheet" href="{% static 'css/pairing.css' %}?v=20260902-ui2">
   <link rel="stylesheet" href="{% static 'css/monitor.css' %}?v=20260902-ui2">
   <link rel="stylesheet" href="{% static 'css/alerts.css' %}?v=20260902-ui2">
   <link rel="stylesheet" href="{% static 'css/mobile.css' %}?v=20260928-parity1">
-  <link rel="stylesheet" href="{% static 'css/ui.css' %}?v=20261020-weapon3">
+  <link rel="stylesheet" href="{% static 'css/ui.css' %}?v=20261021-brand1">
 </head>
 <body data-camera-session-context="{{ camera_session_context }}"{% if user.is_authenticated %} class="has-mobile-tabs"{% endif %}>
   <a class="skip-link" href="#main-content">Aller au contenu principal</a>
   <header class="site-header">
     <div class="header-inner">
       <a class="brand" href="{% url 'home' %}" aria-label="Sentinelle Maison — Accueil">
-        <span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3 4.5 6v5.5c0 4.6 3.1 7.8 7.5 9.5 4.4-1.7 7.5-4.9 7.5-9.5V6L12 3Z"/><path d="m9 12 2 2 4-4"/></svg></span>
+        <img class="brand-mark" src="{% static 'icons/sentinelle.svg' %}" alt="" width="44" height="44">
         <span class="brand-text">Sentinelle Maison</span>
       </a>
       <nav class="desktop-nav" aria-label="Navigation principale">

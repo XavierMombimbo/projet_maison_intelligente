@@ -71,7 +71,9 @@ class MobileWebParityTests(TestCase):
     def test_worker_does_not_cache_private_responses(self):
         response = self.client.get(reverse("app-service-worker"))
         self.assertIn("no-store", response["Cache-Control"])
-        self.assertContains(response, "cache.add(OFFLINE)")
+        self.assertContains(response, "cache.addAll([OFFLINE, LOGO])")
+        self.assertContains(response, "event.request.url === new URL(LOGO, self.location.origin).href")
+        self.assertContains(response, "event.request.mode !== 'navigate'")
         self.assertNotContains(response, "cache.put(")
         self.assertContains(response, "event.request.method !== 'GET'")
 

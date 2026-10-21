@@ -188,7 +188,6 @@ class _Logo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
     final size = compact ? 32.0 : 46.0;
     return Row(
       mainAxisSize: compact ? MainAxisSize.min : MainAxisSize.max,
@@ -196,18 +195,12 @@ class _Logo extends StatelessWidget {
           ? MainAxisAlignment.start
           : MainAxisAlignment.center,
       children: [
-        Container(
+        Image.asset(
+          'assets/branding/sentinelle.png',
           width: size,
           height: size,
-          decoration: BoxDecoration(
-            color: colors.primary,
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Icon(
-            Icons.shield_outlined,
-            color: colors.onPrimary,
-            size: compact ? 19 : 27,
-          ),
+          fit: BoxFit.contain,
+          excludeFromSemantics: true,
         ),
         const SizedBox(width: 8),
         Flexible(
@@ -216,7 +209,7 @@ class _Logo extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
-              fontSize: compact ? 13 : 20,
+              fontSize: compact ? 16 : 22,
               fontWeight: FontWeight.w800,
               color: Theme.of(context).brightness == Brightness.dark
                   ? Colors.white
