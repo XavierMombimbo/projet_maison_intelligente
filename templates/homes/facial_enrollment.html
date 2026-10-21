@@ -3,40 +3,40 @@
 {% block title %}Enregistrer mon visage — {{ maison.nom }}{% endblock %}
 {% block content %}
 <div class="face-enrollment-shell">
-  <a class="back-link" href="{% url 'biometric-profile-list' maison.pk %}">← Profils volontaires</a>
+  <a class="back-link" href="{% url 'my-profile' %}">← Mon profil</a>
   <section class="face-enrollment-card" aria-labelledby="face-title" data-face-enrollment data-submit-url="{% url 'biometric-profile-enroll' maison.pk profil.pk %}">
-    <p class="eyebrow">{{ maison.nom }}</p>
+    <p class="face-house">{{ maison.nom }}</p>
     {% if profil.est_enrole %}
       <h1 id="face-title">Votre visage est enregistré</h1>
       <p>Les caméras de cette maison peuvent reconnaître votre présence.</p>
-      <a class="button" href="{% url 'biometric-profile-list' maison.pk %}">Retour aux profils</a>
+      <a class="button" href="{% url 'my-profile' %}">Retour à mon profil</a>
     {% elif enrollment_available %}
       <h1 id="face-title">Enregistrer mon visage</h1>
-      <p>Placez-vous seul face à la caméra, dans un endroit bien éclairé.</p>
-      <div class="face-camera" data-face-preview hidden><video data-face-video autoplay muted playsinline aria-label="Aperçu de votre caméra"></video></div>
-      <p class="face-feedback" data-face-status role="status" aria-live="polite">La caméra s’ouvrira uniquement à votre demande.</p>
+      <p>Seul et bien éclairé, regardez la caméra.</p>
+      <p class="face-feedback" data-face-status role="status" aria-live="polite">2. Donnez votre accord ci-dessous, puis cliquez sur Démarrer.</p>
       <form data-face-form>
         {% csrf_token %}
         <div class="biometric-consent-check face-consent">
           <input type="checkbox" id="face-consent" data-face-consent required>
-          <label for="face-consent">J’accepte l’envoi d’une capture pour créer mon profil facial dans cette maison.</label>
+          <label for="face-consent">J’autorise l’envoi d’une photo au serveur pour enregistrer mon visage dans cette maison.</label>
         </div>
+        <div class="face-camera" data-face-preview hidden><video data-face-video autoplay muted playsinline aria-label="Aperçu de votre caméra"></video></div>
         <div class="face-actions">
-          <button class="button" type="button" data-face-start>Ouvrir ma caméra</button>
-          <button class="button" type="submit" data-face-save hidden>Enregistrer mon visage</button>
-          <button class="link-button" type="button" data-face-cancel hidden>Fermer la caméra</button>
+          <button class="button" type="button" data-face-start>Démarrer</button>
+          <button class="button" type="submit" data-face-save hidden>Enregistrer</button>
+          <button class="button secondary" type="button" data-face-cancel hidden>Arrêter</button>
         </div>
       </form>
-      <div data-face-success hidden><a class="button" href="{% url 'biometric-profile-list' maison.pk %}">Continuer vers mes profils</a></div>
+      <div data-face-success hidden><a class="button" href="{% url 'my-profile' %}">Retour à mon profil</a></div>
       <p class="face-privacy">La photo n’est pas conservée. Seule une empreinte numérique chiffrée est enregistrée.</p>
-      <details class="face-more"><summary>À savoir sur mon profil</summary><p>Vous pouvez retirer votre profil à tout moment. Une reconnaissance indique une présence connue et ne désactive pas la surveillance. Ce module est utilisé dans le cadre académique non commercial du projet.</p></details>
+      <details class="face-more"><summary>Informations</summary><p>Votre inscription est volontaire. Depuis Mon profil, vous pouvez gérer ou supprimer votre visage. Une reconnaissance indique une présence connue et ne désactive pas la surveillance. Ce module est utilisé dans le cadre académique non commercial du projet.</p></details>
       <noscript><p>Activez JavaScript pour utiliser la caméra. Aucune capture n’a été effectuée.</p></noscript>
     {% else %}
       <h1 id="face-title">Enregistrement indisponible</h1>
-      <p>La reconnaissance faciale n’est pas prête sur ce serveur. Votre accord est conservé ; vous pourrez reprendre ici plus tard.</p>
-      <a class="button" href="{% url 'biometric-profile-list' maison.pk %}">Retour aux profils</a>
+      <p>Vous pourrez reprendre cette étape plus tard. Votre accord est conservé.</p>
+      <a class="button" href="{% url 'my-profile' %}">Retour à mon profil</a>
     {% endif %}
   </section>
 </div>
 {% endblock %}
-{% block extra_scripts %}<script src="{% static 'js/facial-enrollment.js' %}?v=20261018-face1" defer></script>{% endblock %}
+{% block extra_scripts %}<script src="{% static 'js/facial-enrollment.js' %}?v=20261021-profile1" defer></script>{% endblock %}

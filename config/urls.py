@@ -31,7 +31,7 @@ from homes.api import (
     CameraViewSet,
     PairCameraAPIView,
 )
-from homes.views import CameraMonitorView, ConnectCameraView, DashboardView, HealthView, HomeView
+from homes.views import CameraMonitorView, ConnectCameraView, DashboardView, HealthView, HomeView, MyProfileView
 from homes import pwa
 from homes.weapon_analysis import WeaponObservationAPIView
 
@@ -76,6 +76,7 @@ urlpatterns = [
     path("securite/sessions/revoquer/", MFARevokeSessionsView.as_view(), name="mfa-revoke-sessions"),
     path("securite/api-mobile/test/", MobileAPITestView.as_view(), name="mobile-api-test"),
     path("tableau-de-bord/", DashboardView.as_view(), name="dashboard"),
+    path("mon-profil/", MyProfileView.as_view(), name="my-profile"),
     path("connecter-camera/", ConnectCameraView.as_view(), name="connect-camera"),
     path("camera/surveillance/", CameraMonitorView.as_view(), name="camera-monitor"),
     path("maisons/", include("homes.urls")),

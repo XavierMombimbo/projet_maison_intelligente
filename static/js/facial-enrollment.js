@@ -50,7 +50,7 @@
       start.hidden = true;
       save.hidden = false;
       cancel.hidden = false;
-      status.textContent = "Gardez votre visage visible, puis cliquez sur Enregistrer mon visage.";
+      status.textContent = "3. Regardez la caméra, puis cliquez sur Enregistrer.";
     } catch (error) {
       stop();
       status.textContent = error.name === "NotAllowedError"
@@ -60,7 +60,7 @@
       start.disabled = false;
     }
   });
-  cancel.addEventListener("click", () => { stop(); status.textContent = "Caméra fermée. Aucune capture n’a été envoyée."; });
+  cancel.addEventListener("click", () => { stop(); status.textContent = "Caméra arrêtée. Aucune photo envoyée. Cliquez sur Démarrer pour reprendre."; });
   consent.addEventListener("change", () => { if (!consent.checked) stop(); });
   window.addEventListener("pagehide", stop);
   document.addEventListener("visibilitychange", () => { if (document.hidden) stop(); });
@@ -99,7 +99,7 @@
       form.hidden = true;
       root.querySelector("[data-face-success]").hidden = false;
       root.querySelector("h1").textContent = "Votre visage est enregistré";
-      status.textContent = "Votre profil est prêt pour les caméras de cette maison.";
+      status.textContent = "La caméra est arrêtée. Votre visage est prêt pour cette maison.";
     } catch (_) {
       stop();
       status.textContent = "La confirmation n’a pas pu être reçue. Revenez à vos profils pour vérifier l’état avant de réessayer.";

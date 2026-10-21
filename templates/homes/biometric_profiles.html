@@ -1,22 +1,22 @@
 {% extends "base.html" %}
-{% block title %}Profils volontaires — {{ maison.nom }}{% endblock %}
+{% block title %}Mon visage — {{ maison.nom }}{% endblock %}
 {% block content %}
 <div class="page-heading">
   <div>
 
-    <h1>Reconnaissance faciale</h1>
-    <p>{{ maison.nom }} · Chaque personne crée et retire son propre profil.</p>
+    <h1>Mon visage</h1>
+    <p>{{ maison.nom }}</p>
   </div>
-  <a class="button secondary" href="{% url 'maison-detail' maison.pk %}">Retour à la maison</a>
+  <a class="button secondary" href="{% url 'my-profile' %}">Mon profil</a>
 </div>
 
 {% if mon_profil %}
 <section class="face-profile-card">
-  <h2>Mon profil facial</h2>
+  <h2>{% if mon_profil.est_enrole %}Visage enregistré{% else %}Enregistrer mon visage{% endif %}</h2>
   {% if mon_profil.est_enrole %}
     <p>Votre visage est enregistré. Les caméras de cette maison peuvent reconnaître votre présence.</p>
   {% else %}
-    <p>Votre accord est enregistré. Il reste à enregistrer votre visage avec la caméra.</p>
+    <p>Votre accord est enregistré. Continuez avec la caméra.</p>
     {% if web_enrollment %}<a class="button" href="{% url 'biometric-profile-enroll' maison.pk mon_profil.pk %}">Enregistrer mon visage</a>{% else %}<p class="helptext">L’enregistrement du visage sera disponible lorsque le service sera prêt.</p>{% endif %}
   {% endif %}
 </section>
@@ -24,22 +24,22 @@
 
 {% if peut_creer %}
 <section class="biometric-consent-form face-profile-card">
-  <h2>Créer mon profil facial</h2>
-  <p>Les caméras de cette maison pourront reconnaître votre présence. Vous pourrez retirer ce profil à tout moment.</p>
+  <h2>1. Votre accord</h2>
+  <p>Choisissez un nom et confirmez votre accord pour cette maison.</p>
   <form method="post" novalidate>
     {% csrf_token %}
     {{ form.non_field_errors }}
     <div class="biometric-field">
-      <label for="{{ form.libelle.id_for_label }}">{{ form.libelle.label }}</label>
+      <label for="{{ form.libelle.id_for_label }}">Prénom ou surnom</label>
       {{ form.libelle }}
       {{ form.libelle.errors }}
     </div>
     <div class="biometric-consent-check">
       {{ form.consentement }}
-      <label for="{{ form.consentement.id_for_label }}">{{ form.consentement.label }}</label>
+      <label for="{{ form.consentement.id_for_label }}">J’accepte que mon visage soit reconnu dans cette maison. Je peux retirer mon accord à tout moment.</label>
     </div>
     {{ form.consentement.errors }}
-    <button class="button" type="submit">Créer mon profil</button>
+    <button class="button" type="submit">Continuer</button>
   </form>
 </section>
 {% endif %}

@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Mon profil{% endblock %}
+{% block content %}
+<div class="personal-profile">
+  <div class="page-heading"><div><h1>Mon profil</h1><p>{{ user.username }}</p></div></div>
+  <section class="card" aria-labelledby="my-face-title">
+    <h2 id="my-face-title">Mon visage</h2>
+    <p>Enregistrez votre visage pour que les caméras de votre maison reconnaissent votre présence.</p>
+    {% for item in face_houses %}
+    <div class="profile-house">
+      <div><h3>{{ item.maison.nom }}</h3><p class="helptext">{% if item.profil.est_enrole %}Visage enregistré{% elif item.profil %}Visage à enregistrer{% else %}Aucun visage enregistré{% endif %}</p></div>
+      {% if item.profil.est_enrole %}
+      <a class="button secondary" href="{% url 'biometric-profile-list' item.maison.pk %}">Gérer mon visage</a>
+      {% elif item.profil and web_enrollment %}
+      <a class="button" href="{% url 'biometric-profile-enroll' item.maison.pk item.profil.pk %}">Enregistrer mon visage</a>
+      {% else %}
+      <a class="button" href="{% url 'biometric-profile-list' item.maison.pk %}">{% if web_enrollment %}Enregistrer mon visage{% else %}Voir mon profil facial{% endif %}</a>
+      {% endif %}
+    </div>
+    {% empty %}
+    <p>Rejoignez ou créez une maison pour y enregistrer votre visage.</p>
+    <a class="button" href="{% url 'maison-list' %}">Mes maisons</a>
+    {% endfor %}
+    <p class="face-privacy">Vous choisissez de vous inscrire et pouvez supprimer votre profil facial à tout moment.</p>
+  </section>
+  <a class="text-link" href="{% url 'mfa-setup' %}">Sécurité de mon compte</a>
+</div>
+{% endblock %}

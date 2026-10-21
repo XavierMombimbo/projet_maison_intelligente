@@ -68,6 +68,30 @@ class HealthView(View):
         return JsonResponse({"status": "ok"})
 
 
+class MyProfileView(LoginRequiredMixin, TemplateView):
+    template_name = "homes/my_profile.html"
+
+    def dispatch(self, request, *args, **kwargs):
+        response = super().dispatch(request, *args, **kwargs)
+        response["Cache-Control"] = "no-store, private"
+        return response
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        houses = list(Maison.objects.visible_to(self.request.user).filter(
+            membres__utilisateur=self.request.user,
+            membres__statut=StatutInvitation.ACCEPTEE,
+        ).distinct().order_by("nom", "pk"))
+        profiles = {profile.maison_id: profile for profile in ProfilBiometrique.objects.filter(
+            utilisateur=self.request.user, maison__in=houses,
+            statut=StatutProfilBiometrique.ACTIF,
+        )}
+        context["face_houses"] = [{"maison": house, "profil": profiles.get(house.pk)} for house in houses]
+        context["web_enrollment"] = (settings.BIOMETRIC_WEB_ENROLLMENT_ENABLED
+                                      and bool(settings.BIOMETRIC_FACE_MODEL_ROOT))
+        return context
+
+
 class DashboardView(LoginRequiredMixin, TemplateView):
     template_name = "dashboard.html"
 
@@ -208,7 +232,7 @@ class ProfilBiometriqueListCreateView(LoginRequiredMixin, View):
         )
         messages.success(
             request,
-            "Votre consentement est enregistré. L’enrôlement facial reste en attente.",
+            "Votre accord est enregistré. Vous pouvez maintenant enregistrer votre visage.",
         )
         if settings.BIOMETRIC_WEB_ENROLLMENT_ENABLED and settings.BIOMETRIC_FACE_MODEL_ROOT:
             return redirect("biometric-profile-enroll", maison_pk=self.maison.pk, profile_pk=profile.pk)

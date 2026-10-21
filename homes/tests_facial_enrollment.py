@@ -41,7 +41,7 @@ class WebFacialEnrollmentTests(TestCase):
 
     def test_get_has_explicit_camera_and_no_capture_or_template(self):
         response = self.client.get(self.url)
-        self.assertContains(response, "Ouvrir ma caméra")
+        self.assertContains(response, ">Démarrer</button>")
         self.assertContains(response, "La photo n’est pas conservée")
         self.assertEqual(response["Cache-Control"], "no-store, private")
         self.extract.assert_not_called()
@@ -148,6 +148,51 @@ class WebFacialEnrollmentTests(TestCase):
         profile = ProfilBiometrique.objects.get(utilisateur=self.owner, maison=self.house)
         self.assertRedirects(response, reverse("biometric-profile-enroll", args=(self.house.pk, profile.pk)))
         self.assertContains(self.client.get(self.list_url), "Enregistrer mon visage")
+
+    def test_my_profile_requires_sign_in(self):
+        self.client.logout()
+        response = self.client.get(reverse("my-profile"))
+        self.assertRedirects(response, reverse("login") + "?next=" + reverse("my-profile"))
+        self.extract.assert_not_called()
+
+    def test_my_profile_lists_only_own_eligible_house_and_resume_link(self):
+        foreign = Maison.objects.create(nom="Maison privée étrangère", proprietaire=self.other)
+        ProfilBiometrique.objects.create(maison=foreign, utilisateur=self.other, libelle="Profil privé étranger")
+        response = self.client.get(reverse("my-profile"))
+        self.assertContains(response, self.url)
+        self.assertNotContains(response, foreign.nom)
+        self.assertNotContains(response, "Profil privé étranger")
+        self.assertEqual(response["Cache-Control"], "no-store, private")
+        self.extract.assert_not_called()
+
+    def test_my_profile_hides_house_after_membership_withdrawal(self):
+        self.membership.statut = StatutInvitation.EN_ATTENTE
+        self.membership.save(update_fields=("statut",))
+        response = self.client.get(reverse("my-profile"))
+        self.assertEqual(response.context["face_houses"], [])
+        self.assertNotContains(response, self.url)
+        self.assertNotContains(response, self.list_url)
+
+    def test_my_profile_preserves_registered_face_and_hides_other_profiles(self):
+        self.profile.set_template(self.template, ARCFACE_TEMPLATE_FORMAT)
+        ProfilBiometrique.objects.create(maison=self.house, utilisateur=self.owner, libelle="Autre visage privé")
+        response = self.client.get(reverse("my-profile"))
+        self.assertContains(response, "Visage enregistré")
+        self.assertContains(response, "Gérer mon visage")
+        self.assertContains(response, self.list_url)
+        self.assertNotContains(response, self.url)
+        self.assertNotContains(response, "Autre visage privé")
+        self.profile.refresh_from_db()
+        self.assertEqual(self.profile.decrypt_template(), self.template)
+        self.extract.assert_not_called()
+
+    def test_my_profile_with_revoked_face_returns_to_explicit_consent(self):
+        revoke_biometric_profile(self.profile)
+        response = self.client.get(reverse("my-profile"))
+        self.assertContains(response, "Aucun visage enregistré")
+        self.assertContains(response, self.list_url)
+        self.assertNotContains(response, self.url)
+        self.assertIsNone(response.context["face_houses"][0]["profil"])
 
 
 @override_settings(BIOMETRIC_WEB_ENROLLMENT_ENABLED=True, BIOMETRIC_FACE_MODEL_ROOT="/reviewed/models")

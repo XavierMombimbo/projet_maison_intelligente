@@ -1,5 +1,20 @@
 # Profils biométriques volontaires
 
+## Accès simple depuis mon profil — 21 octobre 2026
+
+**Mon compte → Mon profil → Enregistrer mon visage.** La page ne présente que
+les maisons visibles dont la personne est membre accepté et l’état de son propre
+profil. Un visage déjà enregistré mène à Gérer mon visage, sans proposer de le
+remplacer ; un profil en attente reprend directement la caméra. Après un retrait,
+la création repasse par l’accord personnel habituel.
+
+Le parcours utilise des mots simples : prénom ou surnom, accord et Continuer,
+puis **Démarrer → Enregistrer**, avec **Arrêter** disponible pendant l’aperçu.
+L’accord d’envoi de la photo reste distinct et non coché ; la photo est traitée
+en mémoire et la caméra se ferme avant l’envoi. Confirmation puis retour à Mon
+profil. Les droits, le chiffrement, les limites et l’interdiction de remplacement
+implicite ne changent pas. Aucun visage existant n’est réenrôlé par cette refonte.
+
 FACE-001 définit le consentement, les droits, le stockage et le retrait des profils. FACE-002 ajoute une recette académique non commerciale avec InsightFace 0.7.3 et les poids officiels ArcFace `buffalo_l`. Aucune photo brute n’est persistée.
 
 ## Reconnaissance dans Mode caméra

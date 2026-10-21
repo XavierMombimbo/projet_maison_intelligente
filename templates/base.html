@@ -34,6 +34,7 @@
             <summary aria-label="Mon compte">{% include "includes/icon.html" with name="user" %}<span class="account-label">Mon compte</span><span aria-hidden="true">⌄</span></summary>
             <div class="account-panel">
               <p class="account-name">{{ user.username }}</p>
+              <a class="nav-link" href="{% url 'my-profile' %}">Mon profil</a>
               <a class="nav-link" href="{% url 'camera-monitor' %}">Mode caméra</a>
               <a class="nav-link" href="{% url 'mfa-setup' %}">Sécurité du compte</a>
               <a class="nav-link" href="{% url 'connect-camera' %}">Connecter un appareil</a>
@@ -56,6 +57,7 @@
             <a class="nav-link" href="{% url 'camera-list' %}">Caméras</a>
             <a class="nav-link" href="{% url 'event-list' %}">Événements</a>
             <a class="nav-link" href="{% url 'camera-monitor' %}">Mode caméra</a>
+            <a class="nav-link" href="{% url 'my-profile' %}">Mon profil</a>
             <a class="nav-link" href="{% url 'mfa-setup' %}">Sécurité</a>
             <a class="nav-link" href="{% url 'connect-camera' %}">Connecter une caméra</a>
             <button class="nav-link" data-install-app type="button" hidden>Installer l’application</button>

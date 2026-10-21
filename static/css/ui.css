@@ -142,6 +142,14 @@ h3 { font-size: 1.1rem; line-height: 1.35; }
 .monitor-shell[data-weapon-enabled="true"] .monitor-grid { grid-template-columns: minmax(0, 1fr); gap: 16px; }
 .monitor-shell[data-weapon-enabled="true"] .monitor-controls { padding: 14px; }
 .monitor-shell .control-section[hidden] { display: none; }
+.personal-profile { max-width: 760px; margin: 0 auto; }
+.personal-profile .card { padding: 24px; margin-bottom: 20px; }
+.personal-profile h2 { margin-top: 0; }
+.profile-house { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; padding: 18px 0; border-bottom: 1px solid var(--line); }
+.profile-house h3, .profile-house p { margin: 0 0 5px; }
+.face-house { margin: 0 0 10px; color: var(--muted); font-size: .9rem; }
+.face-enrollment-card .face-feedback { padding: 12px 14px; border-radius: 10px; background: var(--panel-soft); }
+.face-enrollment-card .face-actions .button { min-width: 110px; }
 .privacy-banner { background: #fff; border-color: var(--line); }
 .live-indicator { background: var(--brand-dark); }
 .control-label { letter-spacing: .04em; }
