@@ -38,7 +38,7 @@ def _cle_regroupement(camera, objects, rule_context):
     return hashlib.sha256(encoded).hexdigest()
 
 
-def decider_alerte(camera, objects, rule_context):
+def decider_alerte(camera, objects, rule_context, *, verified_weapon=None):
     qualified_people = [
         item
         for item in objects
@@ -59,6 +59,12 @@ def decider_alerte(camera, objects, rule_context):
     }
 
     notification_supprimee = False
+    if verified_weapon and verified_weapon.get("state") == "suspected":
+        return DecisionAlerte(
+            priorite=NiveauAlerte.URGENTE,
+            raison="Objet ressemblant à une arme : détections répétées. Vérification humaine requise.",
+            cle_regroupement=verified_weapon["group"],
+        )
     if qualified_people and rule_type == "line_crossing":
         priority = NiveauAlerte.URGENTE
         reason = "Personne ayant franchi la ligne configurée."

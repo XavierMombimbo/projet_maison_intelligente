@@ -992,6 +992,15 @@ class CameraMonitorView(LoginRequiredMixin, TemplateView):
         context["requested_camera_id"] = self.request.GET.get("camera", "")
         context["web_face_recognition"] = (settings.BIOMETRIC_WEB_RECOGNITION_ENABLED
                                             and bool(settings.BIOMETRIC_FACE_MODEL_ROOT))
+        context["weapon_mode"] = settings.WEAPON_DETECTION_MODE
+        from .weapon_demo import academic_demo_enabled, academic_site_demo_cameras
+        context["weapon_academic_demo"] = academic_demo_enabled(self.request, context["requested_camera_id"])
+        context["weapon_available"] = (settings.WEAPON_DETECTION_MODE in {"review", "alerts"}
+                                       and bool(settings.WEAPON_MODEL_ROOT))
+        if settings.WEAPON_ACADEMIC_SITE_ENABLED:
+            context["weapon_available"] = context["weapon_available"] and context["weapon_academic_demo"]
+            if not context["requested_camera_id"]:
+                context["weapon_demo_cameras"] = academic_site_demo_cameras(self.request.user)
         return context
 
 
@@ -1061,7 +1070,10 @@ class EvenementDecisionView(LoginRequiredMixin, View):
                 lambda: publish_event(evenement.pk, message_type="alert.updated")
             )
 
-        messages.success(request, f"Alerte classée : {evenement.get_statut_display()}.")
+        decision_label = evenement.get_statut_display()
+        if (evenement.metadonnees.get("weapon_verification") or {}).get("state") == "suspected" and nouveau_statut == StatutEvenement.INTRUSION_CONFIRMEE:
+            decision_label = "Signalement confirmé"
+        messages.success(request, f"Alerte classée : {decision_label}.")
         return redirect("event-detail", pk=evenement.pk)
 
 

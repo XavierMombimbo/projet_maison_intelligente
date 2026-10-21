@@ -75,6 +75,98 @@
     const lastEvent = document.getElementById("last-event");
     const faceResult = document.getElementById("face-result");
     const faceEnabled = root.dataset.faceRecognition === "true";
+    const weaponToggle = document.getElementById("weapon-review-toggle");
+    const weaponResult = document.getElementById("weapon-result");
+    const weaponHelp = document.getElementById("weapon-help");
+    const weaponStartButton = document.getElementById("start-weapon-test");
+    const weaponStopButton = document.getElementById("stop-weapon-test");
+    const weaponDemoNotice = document.getElementById("weapon-demo-notice");
+    const weaponDemoLink = document.getElementById("weapon-demo-link");
+    let weaponDemoSelected = false;
+    let weaponStarting = false;
+    let cameraGeneration = 0;
+    const showWeaponResult = (text, state = "stopped") => {
+      if (weaponResult) { weaponResult.textContent = text; weaponResult.dataset.state = state; }
+      const hints = {
+        stopped: root.dataset.weaponAcademicDemo === "true" ? "Cliquez sur Démarrer la démo." : "Cliquez sur Démarrer le test.",
+        starting: "Autorisez la webcam si le navigateur vous le demande.",
+        running: "Montrez une image de test ou un objet factice à la webcam.",
+        candidate: "Gardez le support immobile quelques secondes.",
+        suspected: "Un objet ressemble à une arme. Vérifiez la vidéo ci-dessous.",
+        clear: "L’analyse continue. Cela ne garantit pas l’absence d’arme.",
+        unavailable: "L’analyse n’a pas abouti. Une nouvelle tentative suivra.",
+        paused: "Activez la surveillance dans Autres réglages.",
+        camera_error: "Autorisez la webcam pour cette page, puis réessayez."
+      };
+      if (weaponHelp) weaponHelp.textContent = hints[state] || "";
+    };
+    const updateWeaponButtons = () => {
+      if (weaponStartButton) weaponStartButton.disabled = !credentials || invalidated || weaponStarted || weaponStarting;
+      if (weaponStopButton) weaponStopButton.disabled = !weaponStarted && !weaponStarting && !(running && weaponToggle?.checked);
+    };
+    let weaponDetections = [], latestPredictions = [];
+    let weaponResultAt = 0;
+    let weaponStarted = false;
+    const weaponReview = root.dataset.weaponEnabled === "true" && window.SentinelleWeaponReview
+      ? window.SentinelleWeaponReview.create({
+        send: async (blob, eventId, runId) => {
+          const eventStream = stream;
+          await validToken();
+          if (!running || invalidated || !monitoringActive || stream !== eventStream) throw new Error("Analyse arrêtée.");
+          const observedAt = new Date(Date.now() + serverClockOffsetMs).toISOString();
+          const timestamp = Math.floor((Date.now() + serverClockOffsetMs) / 1000);
+          const nonce = crypto.randomUUID();
+          const objects = [{label: "scene", confidence: 1, bbox: [0, 0, 1, 1]}];
+          const modelName = weaponDemoSelected ? "weapon-observation-academic-demo" : "weapon-observation";
+          const signature = await signDetection({credentials,
+            path: new URL(root.dataset.weaponUrl, window.location.origin).pathname,
+            timestamp, nonce, eventId, observedAt, modelName,
+            modelVersion: runId, objects, blob, ruleContext: null});
+          if (!running || invalidated || !monitoringActive || stream !== eventStream) throw new Error("Analyse arrêtée.");
+          const form = new FormData();
+          for (const [key, value] of Object.entries({contract_version: "2", event_id: eventId,
+            observed_at: observedAt, model_name: modelName, model_version: runId,
+            objects: JSON.stringify(objects)})) form.append(key, value);
+          form.append("capture", blob, "observation.jpg");
+          const response = await cameraFetch(root.dataset.weaponUrl, {method: "POST", body: form,
+            headers: {"X-Camera-Timestamp": String(timestamp), "X-Camera-Nonce": nonce, "X-Camera-Signature": signature}}, false);
+          if (!response.ok) throw new Error("Analyse d’arme indisponible.");
+          return response.json();
+        },
+        render: showWeaponResult,
+        onResult: result => {
+          weaponDetections = result?.detections || [];
+          weaponResultAt = Date.now();
+          if (weaponDemoSelected && result?.academic_demo && result.event_id && weaponDemoNotice && weaponDemoLink
+              && typeof result.detail_url === "string" && result.detail_url.startsWith("/") && !result.detail_url.startsWith("//")) {
+            weaponDemoLink.href = result.detail_url;
+            weaponDemoNotice.hidden = false;
+          }
+          if (running && !invalidated) drawPredictions(latestPredictions);
+        }
+      }) : null;
+    const syncWeaponReview = () => {
+      if (!weaponReview || !weaponToggle) return;
+      if (!weaponToggle.checked || invalidated) {
+        weaponStarted = false;
+        weaponReview.stop();
+        updateWeaponButtons();
+        return;
+      }
+      if (!running || !monitoringActive) {
+        if (weaponStarted) weaponReview.stop();
+        weaponStarted = false;
+        showWeaponResult(!running ? "Démarrez la webcam" : "Surveillance en pause", !running ? "stopped" : "paused");
+        updateWeaponButtons();
+        return;
+      }
+      if (!weaponStarted) {
+        weaponStarted = true;
+        weaponReview.start();
+        updateWeaponButtons();
+      }
+    };
+    weaponToggle?.addEventListener("change", syncWeaponReview);
     const cameraOff = document.getElementById("camera-off");
     const liveIndicator = document.getElementById("live-indicator");
     const pairingLink = document.getElementById("pairing-link");
@@ -259,7 +351,9 @@
         const state = await response.json();
         if (!credentials || invalidated) return;
         startButton.disabled = running;
+        updateWeaponButtons();
         monitoringActive = state.monitoring_active;
+        if (weaponToggle?.checked) syncWeaponReview();
         const nextAnalysisConfig = {
           zone: state.analysis?.zone || {x: 0, y: 0, width: 1, height: 1},
           line: state.analysis?.line || null,
@@ -315,6 +409,7 @@
     };
 
     const drawPredictions = (predictions) => {
+      latestPredictions = predictions;
       overlay.width = video.videoWidth || 640;
       overlay.height = video.videoHeight || 360;
       context.clearRect(0, 0, overlay.width, overlay.height);
@@ -350,6 +445,14 @@
         const durationLabel = item.insideZone ? ` · ${item.zoneDurationSeconds.toFixed(1)}s` : " · hors zone";
         context.fillText(`${settings.label}${trackLabel} ${Math.round(item.score * 100)}%${durationLabel}`, x, Math.max(20, y - 8));
       });
+      if (Date.now() - weaponResultAt <= 5000) weaponDetections.slice(0, 64).forEach(item => {
+        if (!['firearm', 'knife'].includes(item.label)) return;
+        const [x, y, width, height] = item.bbox;
+        context.strokeStyle = '#ad6821'; context.fillStyle = '#ad6821';
+        context.strokeRect(x * overlay.width, y * overlay.height, width * overlay.width, height * overlay.height);
+        context.fillText(item.label === 'firearm' ? 'Arme à feu ?' : 'Couteau ?',
+          x * overlay.width, Math.max(20, y * overlay.height - 8));
+      });
     };
 
     const trackPredictions = (predictions) => {
@@ -380,7 +483,7 @@
       const canvas = document.createElement("canvas");
       const sourceWidth = stream ? video.videoWidth : 640;
       const sourceHeight = stream ? video.videoHeight : 360;
-      const scale = Math.min(1, (faceEnabled ? 1280 : 640) / Math.max(sourceWidth, 1));
+      const scale = Math.min(1, (faceEnabled || weaponReview ? 1280 : 640) / Math.max(sourceWidth, 1));
       canvas.width = Math.max(1, Math.round(sourceWidth * scale));
       canvas.height = Math.max(1, Math.round(sourceHeight * scale));
       const frameContext = canvas.getContext("2d");
@@ -505,6 +608,11 @@
     };
 
     const analyzeFrame = async () => {
+      if (weaponReview) {
+        // Separate failure boundary: an unavailable weapon model must not stop
+        // normal detection, facial recognition or camera controls.
+        void weaponReview.sample(frameBlob, () => running && monitoringActive && !invalidated);
+      }
       if (!running || !monitoringActive || !model || analysisBusy || video.readyState < 2) return;
       analysisBusy = true;
       try {
@@ -570,6 +678,14 @@
     };
 
     function stopCamera() {
+      cameraGeneration++;
+      weaponStarting = false;
+      weaponStarted = false;
+      weaponReview?.stop();
+      weaponDemoSelected = false;
+      weaponDetections = []; latestPredictions = [];
+      if (weaponToggle) weaponToggle.checked = false;
+      updateWeaponButtons();
       running = false;
       lastInferenceAt = 0;
       modelFailed = false;
@@ -588,20 +704,22 @@
       if (faceEnabled && faceResult) faceResult.textContent = "Webcam arrêtée — aucune vérification en cours";
     }
 
-    startButton.addEventListener("click", async () => {
+    const startCamera = async () => {
       if (!credentials || invalidated) return;
+      const ownGeneration = ++cameraGeneration;
       startButton.disabled = true;
       setStatus("Demande d’autorisation de la webcam…");
       try {
         await renewToken();
-        if (!credentials || invalidated) return;
+        if (!credentials || invalidated || ownGeneration !== cameraGeneration) return;
         const opened = await requestCameraStream();
-        if (!credentials || invalidated) { opened.getTracks().forEach(track => track.stop()); return; }
+        if (!credentials || invalidated || ownGeneration !== cameraGeneration) { opened.getTracks().forEach(track => track.stop()); return; }
         stream = opened;
         video.srcObject = stream;
         await video.play();
-        if (!credentials || invalidated) { stopCamera(); return; }
+        if (!credentials || invalidated || ownGeneration !== cameraGeneration) { stopCamera(); return; }
         running = true;
+        syncWeaponReview();
         cameraOff.hidden = true;
         liveIndicator.hidden = false;
         stopButton.disabled = false;
@@ -619,15 +737,41 @@
         scheduleAnalysis();
         await heartbeat();
       } catch (error) {
+        if (ownGeneration !== cameraGeneration) return;
+        const weaponRequested = weaponToggle?.checked;
         stopCamera();
         if (error.code === "INVALID_CREDENTIALS") invalidateSession();
         else setStatus(webcamErrorMessage(error), true);
+        if (weaponRequested) showWeaponResult("Webcam non disponible", "camera_error");
       }
+    };
+    startButton.addEventListener("click", startCamera);
+    const startWeaponTest = async () => {
+      if (!weaponReview || !credentials || invalidated || weaponStarting || weaponStarted) return;
+      weaponDemoSelected = root.dataset.weaponAcademicDemo === "true";
+      if (weaponDemoNotice) weaponDemoNotice.hidden = true;
+      weaponToggle.checked = true;
+      weaponStarting = true;
+      updateWeaponButtons();
+      showWeaponResult("Démarrage du test…", "starting");
+      try {
+        if (!running) await startCamera();
+        else syncWeaponReview();
+      } finally {
+        weaponStarting = false;
+        updateWeaponButtons();
+      }
+    };
+    weaponStartButton?.addEventListener("click", () => startWeaponTest());
+    weaponStopButton?.addEventListener("click", () => {
+      stopCamera(); heartbeat(); setStatus("Webcam arrêtée.");
     });
 
     function invalidateSession() {
       invalidated = true;
       credentials = null;
+      if (weaponDemoNotice) weaponDemoNotice.hidden = true;
+      if (weaponDemoLink) weaponDemoLink.href = "#";
       stopCamera();
       if (stateTimer) clearInterval(stateTimer);
       if (heartbeatTimer) clearInterval(heartbeatTimer);

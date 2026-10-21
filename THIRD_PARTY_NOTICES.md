@@ -8,5 +8,6 @@ Le texte AGPL-3.0 dans LICENSE est propose pour le code applicatif de Sentinelle
 - TensorFlow.js 4.22.0 et COCO-SSD 2.2.3 : Apache-2.0, voir licenses/TensorFlow-*.txt. Sources https://github.com/tensorflow/tfjs et https://github.com/tensorflow/tfjs-models.
 - Flutter, Material Icons, Cupertino Icons et composants de la PWA compilee : notices conservees dans static/mobile/assets/NOTICES ; sources Dart et verrou pubspec.lock inclus.
 - Dependances Python : versions verrouillees dans requirements.txt ; leurs distributions amont ne sont pas relicenciees et ne sont pas incluses comme code applicatif.
+- Candidat experimental d'arme ECE-Software/connect-t1-weapon-fp32 : poids externes non distribues dans cette source, revision c7a093b53e59ce25abac9d35aa4fc1122915832f. La fiche declare Apache-2.0 et les metadonnees ONNX AGPL-3.0 ; divergence et provenance des donnees non resolues, statut evaluation_only. Voir docs/produit/SUSPICION_ARMES.md pour les limites de la demonstration academique.
 
 Configuration : copier .env.example et tools/cloudflared-example.yml, puis renseigner localement les secrets. Les identites DPAPI, bases et captures ne font pas partie du code source. Aucun secret de production n'est necessaire pour reconstruire l'application.

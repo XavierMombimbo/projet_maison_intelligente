@@ -21,6 +21,8 @@ captures/
 staticfiles/
 *.backup
 tmp/production/
+tmp/weapon-review-20261020/
+tmp/weapon-demo-20261020/
 
 # IDE and operating system
 .idea/

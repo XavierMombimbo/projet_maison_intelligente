@@ -40,6 +40,7 @@ def _event_payload(event: Evenement) -> dict:
         "alert_priority": event.priorite_alerte,
         "alert_priority_label": event.get_priorite_alerte_display(),
         "alert_reason": event.raison_priorite,
+        "weapon_suspicion": (event.metadonnees.get("weapon_verification") or {}).get("state") == "suspected",
         "notification_suppressed": event.notification_supprimee,
         "created_at": event.horodatage.isoformat(),
         "detail_url": reverse("event-detail", kwargs={"pk": event.pk}),

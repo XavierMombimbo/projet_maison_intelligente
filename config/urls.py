@@ -33,6 +33,7 @@ from homes.api import (
 )
 from homes.views import CameraMonitorView, ConnectCameraView, DashboardView, HealthView, HomeView
 from homes import pwa
+from homes.weapon_analysis import WeaponObservationAPIView
 
 router = DefaultRouter()
 router.register("cameras", CameraViewSet, basename="camera")
@@ -100,6 +101,7 @@ urlpatterns = [
     ),
     path("api/camera/me/presence/", CameraHeartbeatAPIView.as_view(), name="api-camera-heartbeat"),
     path("api/camera/me/detections/", CameraDetectionAPIView.as_view(), name="api-camera-detection"),
+    path("api/camera/me/suspicion-arme/", WeaponObservationAPIView.as_view(), name="api-camera-weapon"),
     path("api/", include((router.urls, "api"), namespace="api")),
     path("admin/login/", RateLimitedLoginView.as_view(), name="admin-login-mfa"),
     path("admin/", admin.site.urls),

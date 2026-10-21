@@ -150,6 +150,7 @@ def create_detection_event(
     objects=None,
     rule_context=None,
     browser_user=None,
+    verified_weapon=None,
 ) -> tuple[Evenement, bool]:
     if not camera.surveillance_active:
         raise DetectionError("La surveillance de cette caméra est désactivée.")
@@ -188,6 +189,9 @@ def create_detection_event(
         )
 
     normalized, mime_type, image_metadata = validate_and_normalize_capture(uploaded_file)
+    if verified_weapon is not None:
+        # Internal server derivation, never accepted from the signed wire body.
+        objects = verified_weapon["objects"]
     event_confidence = max((item["confidence"] for item in objects), default=confidence or 0.0)
     delayed = bool(
         contract_version >= 2 and observed_at
@@ -214,7 +218,7 @@ def create_detection_event(
                     {**item, "face_status": face_result.state} if item["label"] == "person" else item
                     for item in objects
                 ]
-            alert_decision = decider_alerte(locked_camera, objects, rule_context)
+            alert_decision = decider_alerte(locked_camera, objects, rule_context, verified_weapon=verified_weapon)
             principal_event = trouver_evenement_principal(locked_camera, alert_decision)
             event = Evenement.objects.create(
                 client_event_id=client_event_id,
@@ -241,6 +245,7 @@ def create_detection_event(
                 ),
                 metadonnees={
                     "capture": image_metadata,
+                    **({"weapon_verification": verified_weapon} if verified_weapon is not None else {}),
                     "analyse_locale": True,
                     **({"face_verification": face_result.public()} if face_result is not None else {}),
                     "regle": rule_context,

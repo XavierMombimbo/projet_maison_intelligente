@@ -122,6 +122,20 @@
       "hardware": "Gateway or mobile CPU; consent notice required for runtime metrics where applicable"
     },
     {
+      "id": "ece-weapon-640-review",
+      "status": "evaluation_only",
+      "task": "weapon_suspicion",
+      "version": "c7a093b53e59ce25abac9d35aa4fc1122915832f / Ultralytics ONNX 8.4.171",
+      "source": "https://huggingface.co/ECE-Software/connect-t1-weapon-fp32/tree/c7a093b53e59ce25abac9d35aa4fc1122915832f",
+      "license": "UNRESOLVED: model card Apache-2.0 versus ONNX metadata AGPL-3.0; training-data rights and provenance not documented; evaluation only, no production alerts",
+      "classes": "ONNX 0 Gun, 1 explosion, 2 grenade, 3 knife; only Gun->firearm and knife retained; no intent inference",
+      "artifact": null,
+      "bytes": 12268102,
+      "sha256": "d300e36bb5c1939e0ca0717e7523fcee93d8a4cb502ec407e21f596d26935068",
+      "hardware": "CPU ONNX Runtime, 2 threads; isolated explicit browser review; latency and independent negative set still required",
+      "files": [{"name": "model.onnx", "bytes": 12268102, "sha256": "d300e36bb5c1939e0ca0717e7523fcee93d8a4cb502ec407e21f596d26935068"}]
+    },
+    {
       "id": "mmaction2",
       "status": "evaluation_only",
       "task": "temporal_action_recognition",

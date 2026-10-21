@@ -1,5 +1,19 @@
 # Registre des modèles et décisions techniques
 
+**20 octobre — suspicion d’arme :** candidat ONNX ECE inscrit en `evaluation_only`,
+empreinte et contrat vérifiés. Fiche Apache-2.0 contre métadonnées AGPL-3.0,
+provenance d’entraînement non établie : aucune approbation de production.
+Essai web explicite et protocole : [SUSPICION_ARMES.md](SUSPICION_ARMES.md).
+
+**Reprise après validation de l’essai :** fiche ECE revérifiée, aucun document
+supplémentaire reçu sur l’entraînement ; `evaluation_only` conservé. DISARM
+reste candidat de test académique (lien de données demandant une connexion
+Microsoft lors du contrôle), pas un poids approuvé. OD-WeaponDetection comporte
+une divergence entre README (CC BY-SA 4.0) et License.md (CC BY 4.0) : ne pas
+reprendre l’ancienne mention de licence unique. Critères proposés
+`weapon-pilot-v1`, sources et conditions de qualification dans SUSPICION_ARMES.md.
+Aucun nouveau poids ni donnée réelle téléchargé, aucune activation `alerts`.
+
 Mise à jour posture : **18 octobre 2026**. Le fichier machine
 `config/model_registry.json` est la source des versions, origines, statuts
 et empreintes. Tout nouveau poids doit être ajouté avec sa licence, sa

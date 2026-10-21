@@ -125,6 +125,15 @@ h3 { font-size: 1.1rem; line-height: 1.35; }
 .monitor-metrics dd { color: var(--ink); text-align: left; max-width: none; }
 .monitor-controls .disclosure { margin-bottom: 0; }
 .monitor-controls .disclosure-body { padding: 12px; font-size: .875rem; }
+.weapon-test { margin-bottom: 20px; }
+.weapon-test h2 { margin-top: 0; }
+.weapon-actions { display: flex; flex-wrap: wrap; gap: 10px; margin: 18px 0; }
+.weapon-actions .button { min-height: 48px; }
+.weapon-status { padding: 18px; margin: 0; border: 2px solid #ccdcd6; border-radius: 12px; background: #f4f8f6; color: #142b25; font-size: clamp(1.3rem, 3vw, 1.8rem); font-weight: 750; overflow-wrap: anywhere; }
+.weapon-status[data-state="suspected"], .weapon-status[data-state="candidate"] { border-color: #b47722; background: #fff6e6; color: #744708; }
+.weapon-status[data-state="unavailable"], .weapon-status[data-state="camera_error"] { border-color: #b47722; background: #fff6e6; }
+.weapon-help { margin: 10px 0 18px; }
+.weapon-note, .weapon-privacy { font-size: .875rem; color: var(--muted, #53675f); }
 .privacy-banner { background: #fff; border-color: var(--line); }
 .live-indicator { background: var(--brand-dark); }
 .control-label { letter-spacing: .04em; }

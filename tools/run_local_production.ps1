@@ -1,12 +1,18 @@
 param(
-    [string]$ProductionHome = (Join-Path $env:LOCALAPPDATA 'Sentinelle\production\current')
+    [string]$ProductionHome = (Join-Path $env:LOCALAPPDATA 'Sentinelle\production\current'),
+    [string]$SourceRoot = '',
+    [string]$RuntimeRoot = ''
 )
 
 $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot 'tunnel_recovery.ps1')
 $root = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
-$python = Join-Path $root '.venv\Scripts\python.exe'
-$daphne = Join-Path $root '.venv\Scripts\daphne.exe'
+if ($SourceRoot) { $root = (Resolve-Path -LiteralPath $SourceRoot).Path }
+if (-not $RuntimeRoot) { $RuntimeRoot = $root }
+$RuntimeRoot = (Resolve-Path -LiteralPath $RuntimeRoot).Path
+$python = Join-Path $RuntimeRoot '.venv\Scripts\python.exe'
+$daphne = Join-Path $RuntimeRoot '.venv\Scripts\daphne.exe'
+Set-Location -LiteralPath $root
 $cloudflared = 'C:\Program Files (x86)\cloudflared\cloudflared.exe'
 $garnet = Join-Path $env:LOCALAPPDATA 'Sentinelle\garnet-2.1.8\net10.0\GarnetServer.exe'
 $env:DOTNET_ROOT = Join-Path $env:LOCALAPPDATA 'Sentinelle\dotnet-10.0.12'
@@ -72,7 +78,7 @@ try {
     Start-ManagedProcess 'daphne' $daphne @('-b', '127.0.0.1', '-p', '8001', 'config.asgi:application') $root
     Start-ManagedProcess 'outbox' $python @('manage.py', 'dispatch_event_outbox', '--watch', '--interval', '5') $root
     Start-ManagedProcess 'push' $python @('manage.py', 'dispatch_push_deliveries', '--watch', '--interval', '5') $root
-    $tunnelConfig = '"' + (Join-Path $root 'tools\cloudflared-sentinelle.yml') + '"'
+    $tunnelConfig = '"' + (Join-Path $RuntimeRoot 'tools\cloudflared-sentinelle.yml') + '"'
     Start-ManagedProcess 'tunnel' $cloudflared @('tunnel', '--config', $tunnelConfig, 'run') $root
     $tunnelRecovery = @{ Failures = 0; StartedAt = [datetime]::UtcNow; NextStart = $null }
 

@@ -19,14 +19,15 @@
     </div>
     <details class="disclosure"><summary>Voir les détails techniques</summary><div class="disclosure-body">{% include "homes/_event_technical.html" %}</div></details>
   </article>
-  <details class="disclosure event-image"{% if not summary.quiet %} open{% endif %}><summary>Image de l’événement</summary><div class="disclosure-body"><figure class="capture-frame"><img loading="lazy" src="{% url 'event-capture' evenement.pk %}" alt="Image enregistrée par {{ evenement.camera.nom }} au moment de la détection"><figcaption>Visible uniquement par les personnes autorisées.</figcaption></figure></div></details>
-{% if peut_decider and evenement.statut == "new" and not summary.quiet %}
+  {% if summary.demo %}<p class="privacy-banner">Démonstration académique : aucune image d’essai enregistrée, aucun envoi vers un téléphone.</p>{% else %}
+  <details class="disclosure event-image"{% if not summary.quiet %} open{% endif %}><summary>Image de l’événement</summary><div class="disclosure-body"><figure class="capture-frame"><img loading="lazy" src="{% url 'event-capture' evenement.pk %}" alt="Image enregistrée par {{ evenement.camera.nom }} au moment de la détection"><figcaption>Visible uniquement par les personnes autorisées.</figcaption></figure></div></details>{% endif %}
+{% if peut_decider and evenement.statut == "new" and not summary.quiet and not summary.demo %}
 <section class="card decision-panel" aria-labelledby="decision-title">
   <h2 id="decision-title">Que s’est-il passé ?</h2>
   <p>Votre réponse aide à classer cet événement. La surveillance ne change pas.</p>
   <div class="decision-actions">
     <form method="post" action="{% url 'event-decision' evenement.pk %}" data-confirm="Classer définitivement cet événement comme fausse alerte ?">{% csrf_token %}<input type="hidden" name="decision" value="false_alarm"><button class="button secondary" type="submit">Marquer comme fausse alerte</button></form>
-    <form method="post" action="{% url 'event-decision' evenement.pk %}" data-confirm="Confirmer définitivement cette intrusion ?">{% csrf_token %}<input type="hidden" name="decision" value="confirmed"><button class="button danger" type="submit">Confirmer l’intrusion</button></form>
+    <form method="post" action="{% url 'event-decision' evenement.pk %}" data-confirm="{% if summary.weapon %}Confirmer ce signalement après vérification de l’image ?{% else %}Confirmer définitivement cette intrusion ?{% endif %}">{% csrf_token %}<input type="hidden" name="decision" value="confirmed"><button class="button danger" type="submit">{% if summary.weapon %}Confirmer le signalement{% else %}Confirmer l’intrusion{% endif %}</button></form>
   </div>
 </section>
 {% endif %}

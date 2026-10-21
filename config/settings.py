@@ -350,6 +350,7 @@ REST_FRAMEWORK = {
 }
 
 RATE_LIMITS = {
+    "weapon_observation": (45, 60),
     "biometric_enrollment": (5, 300),
     "login": (int(os.getenv("RATE_LIMIT_LOGIN_COUNT", "10")), 300),
     "signup": (int(os.getenv("RATE_LIMIT_SIGNUP_COUNT", "5")), 3600),
@@ -364,6 +365,14 @@ RATE_LIMITS = {
     "mobile_mfa": (int(os.getenv("RATE_LIMIT_MOBILE_MFA_COUNT", "5")), 300),
     "mobile_refresh": (int(os.getenv("RATE_LIMIT_MOBILE_REFRESH_COUNT", "30")), 60),
 }
+
+# Off by default. Ordinary "review" has no events; academic review can store
+# explicitly experimental records without captures/outbox. "alerts" requires
+# production_approved weights in the model registry.
+WEAPON_DETECTION_MODE = os.getenv("WEAPON_DETECTION_MODE", "disabled").strip()
+WEAPON_MODEL_ROOT = os.getenv("WEAPON_MODEL_ROOT", "").strip()
+WEAPON_ACADEMIC_SITE_ENABLED = env_bool("WEAPON_ACADEMIC_SITE_ENABLED", False)
+WEAPON_ACADEMIC_SITE_CAMERA_IDS = env_list("WEAPON_ACADEMIC_SITE_CAMERA_IDS")
 
 CONTENT_SECURITY_POLICY = "; ".join(
     (
