@@ -16,7 +16,7 @@
       stop() {
         enabled = false; generation++; runId = "";
         onResult(null);
-        render("Test arrêté", "stopped");
+        render("Arrêté", "stopped");
       },
       async sample(capture, active) {
         if (!enabled || busy || now() < next || !active()) return;

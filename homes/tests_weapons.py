@@ -152,7 +152,7 @@ class WeaponAPITests(TestCase):
         response = self.client.get(reverse("camera-monitor"))
         self.assertContains(response, 'id="start-weapon-test"')
         self.assertContains(response, 'id="stop-weapon-test"')
-        self.assertContains(response, "Démarrer le test")
+        self.assertContains(response, ">Démarrer</button>")
         self.assertContains(response, "1,5 seconde")
         self.assertContains(response, "aucune sirène d’arme")
 
@@ -251,11 +251,11 @@ class WeaponAPITests(TestCase):
         with self.demo_settings():
             url = reverse("camera-monitor") + "?camera=" + str(self.camera.pk)
             page = self.client.get(url)
-            self.assertContains(page, "Démarrer la démo")
+            self.assertContains(page, 'data-weapon-academic-demo="true"')
             self.assertContains(page, 'id="start-weapon-test"', count=1)
             self.assertNotContains(page, 'id="start-weapon-demo"')
-            self.assertContains(page, "Alerte d’essai activée")
-        self.assertNotContains(self.client.get(url), "Démarrer la démo")
+            self.assertContains(page, "Mode académique")
+        self.assertNotContains(self.client.get(url), 'data-weapon-academic-demo="true"')
 
     def academic_site_settings(self):
         return override_settings(DEBUG=False, FCM_ENABLED=True,
@@ -305,11 +305,11 @@ class WeaponAPITests(TestCase):
     def test_site_demo_is_not_offered_to_another_house_or_on_invalid_id(self):
         with self.academic_site_settings():
             url = reverse("camera-monitor")
-            self.assertContains(self.client.get(url, {"camera": str(self.camera.pk)}), "Démarrer la démo")
+            self.assertContains(self.client.get(url, {"camera": str(self.camera.pk)}), 'data-weapon-academic-demo="true"')
             self.client.force_login(self.attacker)
-            self.assertNotContains(self.client.get(url, {"camera": str(self.camera.pk)}), "Démarrer la démo")
+            self.assertNotContains(self.client.get(url, {"camera": str(self.camera.pk)}), 'data-weapon-academic-demo="true"')
             with override_settings(WEAPON_ACADEMIC_SITE_CAMERA_IDS=["invalid"]):
-                self.assertNotContains(self.client.get(url, {"camera": "invalid"}), "Démarrer la démo")
+                self.assertNotContains(self.client.get(url, {"camera": "invalid"}), 'data-weapon-academic-demo="true"')
 
     def test_enabling_site_during_plain_review_drops_the_result(self):
         from django.conf import settings

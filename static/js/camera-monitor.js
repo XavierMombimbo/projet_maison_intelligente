@@ -88,14 +88,14 @@
     const showWeaponResult = (text, state = "stopped") => {
       if (weaponResult) { weaponResult.textContent = text; weaponResult.dataset.state = state; }
       const hints = {
-        stopped: root.dataset.weaponAcademicDemo === "true" ? "Cliquez sur Démarrer la démo." : "Cliquez sur Démarrer le test.",
+        stopped: "",
         starting: "Autorisez la webcam si le navigateur vous le demande.",
-        running: "Montrez une image de test ou un objet factice à la webcam.",
+        running: "Présentez une image ou un objet factice à la webcam.",
         candidate: "Gardez le support immobile quelques secondes.",
         suspected: "Un objet ressemble à une arme. Vérifiez la vidéo ci-dessous.",
         clear: "L’analyse continue. Cela ne garantit pas l’absence d’arme.",
         unavailable: "L’analyse n’a pas abouti. Une nouvelle tentative suivra.",
-        paused: "Activez la surveillance dans Autres réglages.",
+        paused: "L’analyse reprendra pendant les horaires de surveillance.",
         camera_error: "Autorisez la webcam pour cette page, puis réessayez."
       };
       if (weaponHelp) weaponHelp.textContent = hints[state] || "";
@@ -753,7 +753,7 @@
       weaponToggle.checked = true;
       weaponStarting = true;
       updateWeaponButtons();
-      showWeaponResult("Démarrage du test…", "starting");
+      showWeaponResult("Démarrage…", "starting");
       try {
         if (!running) await startCamera();
         else syncWeaponReview();

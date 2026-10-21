@@ -1,5 +1,11 @@
 # Suspicion d’arme — essai web du 20 octobre 2026
 
+**Interface simplifiée le 21 octobre :** deux boutons « Démarrer » et
+« Arrêter », état « Arrêté », panneau de résultat compact et vidéo sur toute
+la largeur. Les explications sont repliées dans « Informations ». L’envoi
+d’images au serveur reste annoncé avant le démarrage et le mode académique
+reste indiqué. Horaires, permissions, signature et événements sont inchangés.
+
 Cartes existantes : [WEAPON-001](https://trello.com/c/Xbn4vKsm) et
 [WEAPON-002](https://trello.com/c/vSAzFbqu). Portée demandée : armes à feu et
 couteaux, d’abord dans **Mode caméra**. Ce lot prépare une recette explicite ;
@@ -37,9 +43,13 @@ Le modèle conserve `evaluation_only` ; `alerts` reste verrouillé. Ni les poids
 ni les bases, captures ou paramètres privés ne sont inclus dans la source.
 OpenCV headless est déclaré dans les dépendances serveur, comme sur la
 passerelle. L’utilisateur a demandé la mise en ligne le 21 octobre, sans refaire
-les démonstrations déjà validées. La caméra appairée « Entrée principale » est
-la cible retenue sur le site habituel. Depuis le lien général Mode caméra,
+les démonstrations déjà validées. Après vérification dans Chrome et accord
+explicite, la caméra appairée « vue exterieure » est la cible du site habituel.
+Depuis le lien général Mode caméra,
 un choix explicite ouvre la caméra autorisée sans modifier l’appairage local.
+La démo respecte les horaires de surveillance de la maison, conformément au
+choix explicite de l’utilisateur le 21 octobre. Hors horaires, l’analyse reste
+en pause. Le planning et l’arrêt manuel de la caméra ne sont pas modifiés.
 
 Le déploiement utilise une source isolée issue de la version V10 publiée,
 avec seulement les changements de suspicion d’arme et leur documentation.

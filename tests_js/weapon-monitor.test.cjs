@@ -95,7 +95,7 @@ test('real monitor sends a signed observation without a person and shows a tenta
 test('stopping real monitor rejects a late weapon result and clears the opt-in', async () => {
   const app = await monitor(); app.nodes['stop-weapon-test'].handlers.click(); await app.finish();
   assert.equal(app.nodes['weapon-review-toggle'].checked, false);
-  assert.equal(app.nodes['weapon-result'].textContent, 'Test arrêté');
+  assert.equal(app.nodes['weapon-result'].textContent, 'Arrêté');
   assert.ok(!app.labels.includes('Couteau ?'));
 });
 
@@ -110,7 +110,7 @@ test('start test also works with an already open webcam', async () => {
 test('stop cancels a pending start and releases a webcam permission granted later', async () => {
   const app = await monitor({stopDuringPermission: true});
   assert.equal(app.uploads, 0); assert.equal(app.released, 1);
-  assert.equal(app.nodes['weapon-result'].textContent, 'Test arrêté');
+  assert.equal(app.nodes['weapon-result'].textContent, 'Arrêté');
   assert.equal(app.nodes['start-weapon-test'].disabled, false);
 });
 
@@ -129,7 +129,7 @@ test('test stop remains available when surveillance is paused', async () => {
   assert.equal(app.nodes['stop-weapon-test'].disabled, false);
   app.nodes['stop-weapon-test'].handlers.click();
   assert.equal(app.released(), 1);
-  assert.equal(app.nodes['weapon-result'].textContent, 'Test arrêté');
+  assert.equal(app.nodes['weapon-result'].textContent, 'Arrêté');
 });
 
 test('single start button signs academic choice on the isolated demo and shows the local event notice', async () => {

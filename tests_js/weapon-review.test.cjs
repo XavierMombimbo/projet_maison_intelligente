@@ -22,7 +22,7 @@ test('stopping ignores a late suspicion result and a restart changes run', async
   f.api.start(); const pending = f.api.sample(async () => 'frame', () => true);
   await new Promise(resolve => setImmediate(resolve));
   f.api.stop(); finish({state: 'suspected', mode: 'review'}); await pending;
-  assert.equal(f.messages.at(-1), 'Test arrêté');
+  assert.equal(f.messages.at(-1), 'Arrêté');
   f.api.start(); assert.ok(firstRun);
 });
 test('capture completing after stop is never transmitted', async () => {

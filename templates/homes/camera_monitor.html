@@ -20,41 +20,43 @@
   data-yolo-model-url="{% static 'vendor/yolo/yolo11n.onnx' %}"
   data-yolo-wasm-url="{% static 'vendor/yolo/ort-wasm-simd-threaded.wasm' %}">
   <div class="page-heading">
-    <div><h1 id="camera-title">Mode caméra</h1><p>Démarrez la webcam pour surveiller cet espace.</p></div>
+    <div><h1 id="camera-title">Mode caméra</h1>{% if not weapon_available %}<p>Démarrez la webcam pour surveiller cet espace.</p>{% endif %}</div>
     <span class="monitor-badge" id="monitoring-state">Initialisation…</span>
   </div>
   {% if not weapon_available %}<div class="privacy-banner">
     <span class="privacy-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="5" y="10" width="14" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg></span>
     <div><strong>La webcam reste désactivée jusqu’à votre clic.</strong><span>{% if weapon_available %}Le flux vidéo n’est pas diffusé en continu. Seules les captures d’événements sont envoyées, sauf si vous activez l’essai d’arme décrit ci-dessous.{% else %}Le flux vidéo est analysé ici et n’est jamais diffusé en continu. Seule une capture liée à une détection est envoyée.{% endif %}</span></div>
   </div>{% endif %}
-  {% if web_face_recognition %}
+  {% if web_face_recognition and not weapon_available %}
   <p class="control-feedback">Reconnaissance faciale activée : chaque capture est comparée sur le serveur aux visages enregistrés de cette maison. Une personne reconnue ne déclenche pas d’alerte de présence. Les passages interdits restent signalés.</p>
   {% endif %}
   {% if weapon_demo_cameras %}
   <section class="card weapon-test" aria-labelledby="academic-camera-choice">
-    <h2 id="academic-camera-choice">Démo académique : suspicion d’arme</h2>
-    <p>Ouvrez la caméra sur laquelle vous souhaitez tester la détection.</p>
+    <h2 id="academic-camera-choice">Suspicion d’arme</h2>
+    <p>Choisissez votre caméra.</p>
     <div class="weapon-actions">{% for demo_camera in weapon_demo_cameras %}<a class="button secondary" href="{% url 'camera-monitor' %}?camera={{ demo_camera.pk }}">Ouvrir pour {{ demo_camera.nom }}</a>{% endfor %}</div>
   </section>
   {% endif %}
   {% if weapon_available %}
   <section class="card weapon-test" aria-labelledby="weapon-test-title">
-    <h2 id="weapon-test-title">{% if weapon_academic_demo %}Démonstration : suspicion d’arme{% else %}Tester la détection d’arme{% endif %}</h2>
-    <p>{% if weapon_academic_demo %}Démarrez la démo, montrez une image ou un objet factice, puis ouvrez l’événement d’essai après la détection répétée.{% else %}Démarrez le test, montrez une image ou un objet factice, puis lisez le résultat ici.{% endif %}</p>
-    <p class="weapon-privacy">Après votre accord, la webcam démarre et des images sont analysées sur le serveur, sans enregistrement des images d’essai.</p>
+    <div class="weapon-heading"><h2 id="weapon-test-title">Suspicion d’arme</h2>{% if weapon_academic_demo %}<span class="weapon-note">Mode académique</span>{% endif %}</div>
+    <p class="weapon-privacy">Démarrer active la webcam et envoie des images au serveur pour analyse.</p>
     <input type="checkbox" id="weapon-review-toggle" hidden aria-hidden="true">
     <div class="weapon-actions">
-      <button type="button" class="button" id="start-weapon-test" disabled>{% if weapon_academic_demo %}Démarrer la démo{% else %}Démarrer le test{% endif %}</button>
-      <button type="button" class="button secondary" id="stop-weapon-test" disabled>{% if weapon_academic_demo %}Arrêter la démo{% else %}Arrêter le test{% endif %}</button>
+      <button type="button" class="button" id="start-weapon-test" disabled>Démarrer</button>
+      <button type="button" class="button secondary" id="stop-weapon-test" disabled>Arrêter</button>
+      <p id="weapon-result" class="weapon-status" data-state="stopped" role="status" aria-live="polite" aria-describedby="weapon-help">Arrêté</p>
     </div>
-    <p id="weapon-result" class="weapon-status" data-state="stopped" role="status" aria-live="polite" aria-describedby="weapon-help">Test arrêté</p>
-    <p id="weapon-help" class="weapon-help">{% if weapon_academic_demo %}Cliquez sur Démarrer la démo.{% else %}Cliquez sur Démarrer le test.{% endif %}</p>
+    <p id="weapon-help" class="weapon-help"></p>
     {% if weapon_academic_demo %}
-    <p class="weapon-note"><strong>Alerte d’essai activée pour cette démo.</strong> Une suspicion répétée enregistre un événement expérimental dans l’historique de ce site et affiche un lien ici. Aucune image conservée, aucun envoi vers un téléphone, aucune sirène.</p>
-    <p id="weapon-demo-notice" class="control-feedback" role="alert" hidden><strong>Alerte d’essai enregistrée — expérimental.</strong> <a id="weapon-demo-link" href="#" target="_blank" rel="noopener">Voir l’événement d’essai</a></p>
+    <p id="weapon-demo-notice" class="control-feedback" role="alert" hidden><strong>Événement enregistré.</strong> <a id="weapon-demo-link" href="#" target="_blank" rel="noopener">Voir l’événement</a></p>
     {% endif %}
-    {% if weapon_mode == 'review' and not weapon_academic_demo %}<p class="weapon-note">Essai : résultat à l’écran uniquement, aucune notification et aucune sirène d’arme.</p>{% endif %}
-    <details class="disclosure"><summary>Comment le test fonctionne</summary><div class="disclosure-body">Une image est envoyée toutes les 1,5 seconde pendant le test. Plusieurs détections cohérentes sont nécessaires avant d’afficher « Suspicion d’arme ». Ce résultat reste à vérifier. La détection habituelle des personnes est séparée.</div></details>
+    <details class="disclosure"><summary>Informations</summary><div class="disclosure-body">
+      <p>Les horaires de surveillance sont respectés. Montrez une image ou un objet factice pour une démonstration.</p>
+      <p>Une image est envoyée toutes les 1,5 seconde pendant l’analyse d’arme, sans conservation de ces images. Plusieurs détections cohérentes sont nécessaires avant d’afficher « Suspicion d’arme ». Ce résultat reste à vérifier.</p>
+      {% if weapon_academic_demo %}<p>Mode académique : une suspicion répétée enregistre un événement expérimental et affiche un lien ici. Aucune image conservée, aucun envoi vers un téléphone, aucune sirène.</p>{% elif weapon_mode == 'review' %}<p>Résultat à l’écran uniquement, aucune notification et aucune sirène d’arme.</p>{% endif %}
+      {% if web_face_recognition %}<p>La reconnaissance faciale concerne les captures d’événements habituels : elles sont comparées sur le serveur aux visages enregistrés de cette maison. Une présence reconnue ne déclenche pas d’alerte de présence ; les passages interdits restent signalés.</p>{% endif %}
+    </div></details>
   </section>
   {% endif %}
   <div class="monitor-grid">
@@ -69,7 +71,7 @@
       <div class="controls-heading"><div><h2 id="controls-title">Ma webcam</h2></div><span class="status-dot offline" id="control-status-dot" aria-hidden="true"></span></div>
       <p id="camera-status" class="control-feedback" role="status" aria-live="polite">Recherche de la caméra…</p>
       <form method="post" action="#" id="monitoring-toggle-form" hidden>{% csrf_token %}<input type="hidden" name="return_to" value="monitor"><button class="button secondary" id="monitoring-toggle-button" type="submit">Modifier la surveillance</button></form>
-      <div class="control-section"><span class="control-label">Webcam</span><button class="button" id="start-camera" type="button"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 10 4.5-2.5v9L15 14"/><rect x="3" y="6" width="12" height="12" rx="3"/></svg>Autoriser et démarrer la webcam</button><button class="button secondary" id="stop-camera" type="button" disabled>Arrêter immédiatement</button></div>
+      <div class="control-section"{% if weapon_available %} hidden{% endif %}><span class="control-label">Webcam</span><button class="button" id="start-camera" type="button"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 10 4.5-2.5v9L15 14"/><rect x="3" y="6" width="12" height="12" rx="3"/></svg>Démarrer</button><button class="button secondary" id="stop-camera" type="button" disabled>Arrêter</button></div>
       {% if user.is_authenticated %}<div class="control-section"><span class="control-label">Alertes</span><div id="realtime-alerts" class="monitor-realtime" data-ws-path="/ws/alerts/"><span id="ws-indicator" class="connection-dot is-connecting" aria-hidden="true"></span><span id="ws-state">Connexion aux alertes…</span></div><button class="button secondary alert-sound-button" id="sound-toggle" type="button" aria-pressed="false">Activer la sirène</button></div>{% endif %}
       <dl class="monitor-result">
         <dt>Dernier événement</dt><dd id="last-event">Aucun pour le moment</dd>
@@ -104,6 +106,6 @@
 <script src="{% static 'js/event-contract-v2.js' %}?v=20260925-rules1"></script>
 <script src="{% static 'js/browser-camera-store.js' %}?v=20261018-account1"></script>
 <script src="{% static 'js/browser-face-result.js' %}?v=20261019-face1"></script>
-<script src="{% static 'js/weapon-review.js' %}?v=20261020-weapon3"></script>
-<script src="{% static 'js/camera-monitor.js' %}?v=20261021-weapon5"></script>
+<script src="{% static 'js/weapon-review.js' %}?v=20261021-simple1"></script>
+<script src="{% static 'js/camera-monitor.js' %}?v=20261021-simple1"></script>
 {% endblock %}
