@@ -1025,6 +1025,7 @@ class CameraMonitorView(LoginRequiredMixin, TemplateView):
             context["weapon_available"] = context["weapon_available"] and context["weapon_academic_demo"]
             if not context["requested_camera_id"]:
                 context["weapon_demo_cameras"] = academic_site_demo_cameras(self.request.user)
+        context["combined_available"] = context["weapon_available"] and settings.WEAPON_COMBINED_ENABLED
         return context
 
 

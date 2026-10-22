@@ -1,5 +1,20 @@
 # Notifications push
 
+## Message combiné — 22 octobre 2026
+
+Une preuve serveur de suspicion d’arme associée à une personne utilise le texte
+« Personne détectée avec port d’arme probable » dans les alertes web, la fiche et
+le corps FCM. Le champ de transport `person_weapon_suspicion=true` permet au
+nouveau client Android de reprendre ce texte au premier plan, sans accepter du
+texte arbitraire à afficher. L’application déjà installée doit être mise à jour
+pour ce nouveau rendu au premier plan. Une arme seule garde le libellé général.
+
+Les préférences de catégories, regroupement, horaires silencieux et visibilité
+Android private/public/secret continuent à s’appliquer. Aucun nom de personne,
+visage, score biométrique ou image n’est ajouté au push. L’envoi à Firebase ne
+prouve ni réception ni affichage sur un téléphone. Le mode combiné académique
+est activé séparément ; l’ancien essai isolé reste sans boîte d’envoi ni push.
+
 PUSH-001 utilise Firebase Cloud Messaging pour Android et pourra relayer APNs pour iOS. Le fournisseur constitue un transport : son acceptation n’est jamais considérée comme une preuve de réception sur le téléphone.
 
 ## Cycle de vie

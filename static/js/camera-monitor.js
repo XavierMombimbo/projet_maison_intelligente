@@ -75,6 +75,7 @@
     const lastEvent = document.getElementById("last-event");
     const faceResult = document.getElementById("face-result");
     const faceEnabled = root.dataset.faceRecognition === "true";
+    const combined = root.dataset.combinedEnabled === "true";
     const weaponToggle = document.getElementById("weapon-review-toggle");
     const weaponResult = document.getElementById("weapon-result");
     const weaponHelp = document.getElementById("weapon-help");
@@ -90,8 +91,8 @@
       const hints = {
         stopped: "",
         starting: "Autorisez la webcam si le navigateur vous le demande.",
-        running: "Présentez une image ou un objet factice à la webcam.",
-        candidate: "Gardez le support immobile quelques secondes.",
+        running: combined ? "Détection d’intrusion et suspicion d’arme actives sur la même image." : "Présentez une image ou un objet factice à la webcam.",
+        candidate: combined ? "Vérification de l’objet sur plusieurs images…" : "Gardez le support immobile quelques secondes.",
         suspected: "Un objet ressemble à une arme. Vérifiez la vidéo ci-dessous.",
         clear: "L’analyse continue. Cela ne garantit pas l’absence d’arme.",
         unavailable: "L’analyse n’a pas abouti. Une nouvelle tentative suivra.",
@@ -109,38 +110,56 @@
     let weaponStarted = false;
     const weaponReview = root.dataset.weaponEnabled === "true" && window.SentinelleWeaponReview
       ? window.SentinelleWeaponReview.create({
-        send: async (blob, eventId, runId) => {
+        send: async (sample, eventId, runId) => {
+          const blob = combined ? sample.blob : sample;
           const eventStream = stream;
           await validToken();
           if (!running || invalidated || !monitoringActive || stream !== eventStream) throw new Error("Analyse arrêtée.");
-          const observedAt = new Date(Date.now() + serverClockOffsetMs).toISOString();
+          const observedAt = combined ? sample.observedAt : new Date(Date.now() + serverClockOffsetMs).toISOString();
           const timestamp = Math.floor((Date.now() + serverClockOffsetMs) / 1000);
           const nonce = crypto.randomUUID();
-          const objects = [{label: "scene", confidence: 1, bbox: [0, 0, 1, 1]}];
-          const modelName = weaponDemoSelected ? "weapon-observation-academic-demo" : "weapon-observation";
+          const objects = combined && sample.objects.length ? sample.objects : [{label: "scene", confidence: 1, bbox: [0, 0, 1, 1]}];
+          const ruleContext = combined ? sample.ruleContext : null;
+          const modelName = combined ? (weaponDemoSelected ? "camera-combined-academic" : "camera-combined")
+            : weaponDemoSelected ? "weapon-observation-academic-demo" : "weapon-observation";
           const signature = await signDetection({credentials,
             path: new URL(root.dataset.weaponUrl, window.location.origin).pathname,
             timestamp, nonce, eventId, observedAt, modelName,
-            modelVersion: runId, objects, blob, ruleContext: null});
+            modelVersion: runId, objects, blob, ruleContext});
           if (!running || invalidated || !monitoringActive || stream !== eventStream) throw new Error("Analyse arrêtée.");
           const form = new FormData();
           for (const [key, value] of Object.entries({contract_version: "2", event_id: eventId,
             observed_at: observedAt, model_name: modelName, model_version: runId,
             objects: JSON.stringify(objects)})) form.append(key, value);
           form.append("capture", blob, "observation.jpg");
-          const response = await cameraFetch(root.dataset.weaponUrl, {method: "POST", body: form,
-            headers: {"X-Camera-Timestamp": String(timestamp), "X-Camera-Nonce": nonce, "X-Camera-Signature": signature}}, false);
-          if (!response.ok) throw new Error("Analyse d’arme indisponible.");
-          return response.json();
+          if (ruleContext) form.append("rule_context", JSON.stringify(ruleContext));
+          try {
+            const response = await cameraFetch(root.dataset.weaponUrl, {method: "POST", body: form,
+              headers: {"X-Camera-Timestamp": String(timestamp), "X-Camera-Nonce": nonce, "X-Camera-Signature": signature}}, false);
+            if (!response.ok) throw new Error("Analyse d’arme indisponible.");
+            return await response.json();
+          } catch (error) {
+            // Reuse the same signed scene and event identity: a lost response
+            // cannot create a second event. Ordinary intrusion remains available.
+            if (combined && ruleContext && Date.now() >= cooldownUntil && running && monitoringActive && !invalidated && stream === eventStream) {
+              await transmitEvent(sample.predictions, ruleContext, {blob, eventId, observedAt,
+                descriptor: {name: modelName, version: runId}});
+            }
+            throw error;
+          }
         },
         render: showWeaponResult,
         onResult: result => {
           weaponDetections = result?.detections || [];
           weaponResultAt = Date.now();
-          if (weaponDemoSelected && result?.academic_demo && result.event_id && weaponDemoNotice && weaponDemoLink
+          if ((combined || weaponDemoSelected && result?.academic_demo) && result?.event_id && weaponDemoNotice && weaponDemoLink
               && typeof result.detail_url === "string" && result.detail_url.startsWith("/") && !result.detail_url.startsWith("//")) {
             weaponDemoLink.href = result.detail_url;
             weaponDemoNotice.hidden = false;
+          }
+          if (combined && result?.event_id) {
+            lastEvent.textContent = result.alert_title || "Événement enregistré";
+            if (faceEnabled && faceResult) faceResult.textContent = window.SentinelleBrowserFaceResult.describe(result);
           }
           if (running && !invalidated) drawPredictions(latestPredictions);
         }
@@ -479,7 +498,7 @@
       }));
     };
 
-    const frameBlob = () => new Promise((resolve) => {
+    const frameBlob = (source = video) => new Promise((resolve) => {
       const canvas = document.createElement("canvas");
       const sourceWidth = stream ? video.videoWidth : 640;
       const sourceHeight = stream ? video.videoHeight : 360;
@@ -488,7 +507,7 @@
       canvas.height = Math.max(1, Math.round(sourceHeight * scale));
       const frameContext = canvas.getContext("2d");
       if (stream) {
-        frameContext.drawImage(video, 0, 0, canvas.width, canvas.height);
+        frameContext.drawImage(source, 0, 0, canvas.width, canvas.height);
       } else {
         frameContext.fillStyle = "#16231f";
         frameContext.fillRect(0, 0, canvas.width, canvas.height);
@@ -518,19 +537,19 @@
       });
     };
 
-    const transmitEvent = async (predictions, ruleContext) => {
+    const transmitEvent = async (predictions, ruleContext, snapshot = {}) => {
       if (!monitoringActive) {
         setStatus("Activez d’abord la surveillance depuis le compte propriétaire.", true);
         return;
       }
       cooldownUntil = Date.now() + EVENT_COOLDOWN_MS;
       const eventStream = stream;
-      const blob = await frameBlob();
+      const blob = snapshot.blob || await frameBlob();
       if (!running || invalidated || stream !== eventStream) return;
-      const eventId = crypto.randomUUID();
-      const observedAt = new Date(Date.now() + serverClockOffsetMs).toISOString();
+      const eventId = snapshot.eventId || crypto.randomUUID();
+      const observedAt = snapshot.observedAt || new Date(Date.now() + serverClockOffsetMs).toISOString();
       const objects = normalizedObjects(predictions);
-      const descriptor = modelDescriptor;
+      const descriptor = snapshot.descriptor || modelDescriptor;
       const formData = new FormData();
       formData.append("contract_version", "2");
       formData.append("event_id", eventId);
@@ -608,7 +627,7 @@
     };
 
     const analyzeFrame = async () => {
-      if (weaponReview) {
+      if (weaponReview && !combined) {
         // Separate failure boundary: an unavailable weapon model must not stop
         // normal detection, facial recognition or camera controls.
         void weaponReview.sample(frameBlob, () => running && monitoringActive && !invalidated);
@@ -616,7 +635,15 @@
       if (!running || !monitoringActive || !model || analysisBusy || video.readyState < 2) return;
       analysisBusy = true;
       try {
-        const predictions = await model.detect(video);
+        // Both models consume this frozen frame, never boxes from an older
+        // frame paired with an unrelated later webcam capture.
+        const input = combined ? document.createElement("canvas") : video;
+        if (combined) {
+          input.width = video.videoWidth; input.height = video.videoHeight;
+          input.getContext("2d").drawImage(video, 0, 0);
+        }
+        const observedAt = new Date(Date.now() + serverClockOffsetMs).toISOString();
+        const predictions = await model.detect(input);
         lastInferenceAt = Date.now();
         const accepted = window.SentinelleDetectionPolicy.acceptedPredictions(
           predictions,
@@ -627,7 +654,11 @@
         const inside = tracked.filter(item => item.insideZone);
         stabilityState.textContent = `${inside.length} piste${inside.length === 1 ? "" : "s"} dans la zone · seuil ${analysisConfig.presenceSeconds.toFixed(1)} s`;
         const ruleMatch = window.SentinelleRuleEvaluator.evaluate(tracked, analysisConfig);
-        if (Date.now() >= cooldownUntil && ruleMatch) {
+        if (combined && weaponReview && weaponToggle?.checked) {
+          void weaponReview.sample(async () => ({blob: await frameBlob(input), observedAt,
+            predictions: tracked, objects: normalizedObjects(tracked), ruleContext: ruleMatch?.context || null}),
+            () => running && monitoringActive && !invalidated);
+        } else if (Date.now() >= cooldownUntil && ruleMatch) {
           await transmitEvent(ruleMatch.predictions, ruleMatch.context);
         }
       } catch (error) {

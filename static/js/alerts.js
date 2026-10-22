@@ -90,6 +90,7 @@
   }
 
   function alertTitle(payload) {
+    if (payload.person_weapon_suspicion === true) return "Personne détectée avec port d’arme probable";
     if (payload.weapon_suspicion === true) return "Suspicion d’arme — à vérifier";
     if (Number(payload.alert_priority) >= 100) return "Alerte urgente";
     if (Number(payload.alert_priority) >= 80) return "Alerte élevée";

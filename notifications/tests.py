@@ -38,6 +38,23 @@ class InvalidTokenProvider:
 
 @override_settings(PUSH_MAX_ATTEMPTS=2, PUSH_RETRY_BASE_SECONDS=1)
 class PushNotificationTests(TestCase):
+    def test_combined_alert_text_keeps_personal_lock_screen_visibility(self):
+        from firebase_admin import exceptions, messaging
+        from homes.weapon_messages import PERSON_WEAPON_TITLE
+        self.event.metadonnees = {"weapon_verification": {"state": "suspected", "person_associated": True}}
+        self.event.save(update_fields=["metadonnees"])
+        self.register()
+        enqueue_push_deliveries(self.event.pk)
+        delivery = PushDelivery.objects.get()
+        provider = FirebasePushProvider()
+        with patch.object(provider, "_messaging", return_value=(messaging, exceptions, None)), patch.object(
+            messaging, "send", return_value="message-id") as send:
+            provider.send(delivery)
+        message = send.call_args.args[0]
+        self.assertEqual(message.notification.body, PERSON_WEAPON_TITLE)
+        self.assertEqual(message.data["person_weapon_suspicion"], "true")
+        self.assertEqual(message.android.notification.visibility, "private")
+
     def test_android_notification_uses_audible_alert_channel(self):
         from firebase_admin import exceptions, messaging
 

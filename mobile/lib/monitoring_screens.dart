@@ -1149,7 +1149,7 @@ class _EventCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      _eventTitle(event.type),
+                      event.hasProbableWeapon ? 'Personne détectée avec port d’arme probable' : _eventTitle(event.type),
                       style: const TextStyle(
                         fontWeight: FontWeight.w700,
                         fontSize: 13,
@@ -1324,7 +1324,7 @@ class _EventScreenState extends State<_EventScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            _eventTitle(_event.type),
+                            _event.hasProbableWeapon ? 'Personne détectée avec port d’arme probable' : _eventTitle(_event.type),
                             style: _heading(
                               context,
                               size: 18,

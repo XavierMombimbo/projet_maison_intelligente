@@ -206,7 +206,8 @@ def create_detection_event(
         with transaction.atomic():
             locked_camera = type(camera).objects.select_for_update().get(pk=camera.pk)
             if browser_user is not None:
-                if (not locked_camera.surveillance_active or locked_camera.date_revocation
+                from .scheduling import effective_camera_monitoring
+                if (not effective_camera_monitoring(locked_camera)[0] or locked_camera.date_revocation
                         or not type(camera).objects.controllable_by(browser_user).filter(pk=camera.pk).exists()):
                     raise DetectionError("Les droits ou la surveillance de cette caméra ont changé.")
             if face_result is not None:

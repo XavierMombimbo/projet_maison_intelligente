@@ -60,9 +60,12 @@ def decider_alerte(camera, objects, rule_context, *, verified_weapon=None):
 
     notification_supprimee = False
     if verified_weapon and verified_weapon.get("state") == "suspected":
+        from .weapon_messages import PERSON_WEAPON_TITLE
         return DecisionAlerte(
             priorite=NiveauAlerte.URGENTE,
-            raison="Objet ressemblant à une arme : détections répétées. Vérification humaine requise.",
+            raison=(PERSON_WEAPON_TITLE + ". Vérification humaine requise."
+                    if verified_weapon.get("person_associated") else
+                    "Objet ressemblant à une arme : détections répétées. Vérification humaine requise."),
             cle_regroupement=verified_weapon["group"],
         )
     if qualified_people and rule_type == "line_crossing":

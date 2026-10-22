@@ -6,6 +6,7 @@ from django.db import transaction
 from django.utils import timezone
 
 from homes.models import Evenement
+from homes.weapon_messages import PERSON_WEAPON_TITLE, person_weapon_suspected
 
 from .crypto import decrypt_token, encrypt_token, token_digest
 from .preferences import allows_push
@@ -75,13 +76,15 @@ class FirebasePushProvider:
             token=token,
             notification=messaging.Notification(
                 title="Sentinelle Maison",
-                body="Une nouvelle alerte est disponible.",
+                body=(PERSON_WEAPON_TITLE if person_weapon_suspected(delivery.event.metadonnees)
+                      else "Une nouvelle alerte est disponible."),
             ),
             data={
                 "type": "alert.created",
                 "event_id": str(delivery.event_id),
                 "delivery_id": str(delivery.pk),
                 "lock_screen": visibility,
+                **({"person_weapon_suspicion": "true"} if person_weapon_suspected(delivery.event.metadonnees) else {}),
             },
             android=messaging.AndroidConfig(
                 priority="high",

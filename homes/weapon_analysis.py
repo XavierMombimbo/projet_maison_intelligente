@@ -80,7 +80,15 @@ class WeaponObservationAPIView(APIView):
         serializer = DetectionEventSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         data = serializer.validated_data
-        demo_requested = data.get("model_name") == "weapon-observation-academic-demo"
+        from .combined_analysis import COMBINED_MODELS, process_observation
+        combined = data.get("model_name") in COMBINED_MODELS
+        if combined and not settings.WEAPON_COMBINED_ENABLED:
+            return Response({"detail": "La surveillance combinée n’est pas activée."}, status=403)
+        if combined:
+            from .scheduling import effective_camera_monitoring
+            if not effective_camera_monitoring(camera)[0]:
+                return Response({"detail": "Surveillance en pause selon les horaires."}, status=403)
+        demo_requested = data.get("model_name") in {"weapon-observation-academic-demo", "camera-combined-academic"}
         if settings.WEAPON_ACADEMIC_SITE_ENABLED and not demo_requested:
             return Response({"detail": "Cette caméra utilise la démonstration académique explicite."}, status=403)
         if demo_requested and not academic_demo_enabled(request, camera.pk):
@@ -89,8 +97,9 @@ class WeaponObservationAPIView(APIView):
             uuid.UUID(data.get("model_version", ""))  # one browser run, reset on every stop
         except ValueError:
             return Response({"detail": "Session d’analyse invalide."}, status=400)
-        if (data["contract_version"] != 2 or data.get("model_name") not in {"weapon-observation", "weapon-observation-academic-demo"}
-                or data.get("objects") != SCENE or data.get("rule_context")):
+        if (data["contract_version"] != 2 or data.get("model_name") not in {"weapon-observation", "weapon-observation-academic-demo", *COMBINED_MODELS}
+                or (not combined and (data.get("objects") != SCENE or data.get("rule_context")))
+                or (combined and data["objects"] != SCENE and any(x["label"] not in {"person", "dog", "cat"} or "face_status" in x for x in data["objects"]))):
             return Response({"detail": "Le résultat d’arme est exclusivement calculé par le serveur."}, status=400)
         if abs((timezone.now() - data["observed_at"]).total_seconds()) > 5:
             return Response({"detail": "Observation expirée."}, status=400)
@@ -109,6 +118,10 @@ class WeaponObservationAPIView(APIView):
         state_key = "weapon-review:" + hashlib.sha256(key_material.encode()).hexdigest()
         observation_id = str(data["event_id"])
         digest = capture_sha256(data["capture"])
+        if combined:
+            return process_observation(request=request, camera=camera, data=data, normalized=normalized,
+                                       state_key=state_key, nonce=nonce, timestamp=timestamp,
+                                       mode=mode, received_at=received_at)
         try:
             found = infer(normalized, mode)
         except (WeaponUnavailable, OSError, ValueError):

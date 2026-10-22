@@ -184,6 +184,7 @@ class PushCoordinator {
         lockScreen: message.data['lock_screen'] is String
             ? message.data['lock_screen'] as String
             : 'private',
+        personWeaponSuspicion: message.data['person_weapon_suspicion'] == 'true',
       );
     } catch (error) {
       _debugError(error);

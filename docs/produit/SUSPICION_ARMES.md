@@ -1,5 +1,45 @@
 # Suspicion d’arme — essai web du 20 octobre 2026
 
+## Surveillance combinée — 22 octobre 2026
+
+La demande utilisateur réunit intrusion et arme dans Mode caméra, avec un seul
+Démarrer / Arrêter et le message **Personne détectée avec port d’arme probable**.
+Activation distincte : `WEAPON_COMBINED_ENABLED=True`, désactivée par défaut,
+avec les mêmes droits, liste de caméras autorisées et horaires que l’intégration
+académique existante. Aucun démarrage automatique. Les modèles et leur registre
+restent inchangés : le mode review utilise toujours un modèle expérimental,
+sans prétendre à une qualification de précision ni à une preuve de menace.
+
+Les deux modèles lisent le même instantané figé : personnes/animaux dans le
+navigateur, armes sur le serveur. La signature couvre capture, objets, règle et
+session d’analyse ; seules des classes ordinaires sont acceptées du navigateur.
+Les classes/boîtes d’armes et leur confirmation sont exclusivement calculées
+par le serveur. Trois observations cohérentes sur au moins deux secondes sont
+requises. L’association personne/objet est évaluée sur chaque image : personne
+au-dessus du seuil et dans la zone, au moins 60 % de la boîte de l’objet près de
+sa boîte légèrement étendue. Une arme seule ou éloignée ne permet pas d’afficher
+un port probable : le libellé reste alors **Suspicion d’arme**.
+
+Un même événement réunit personne, objet et capture chiffrée. Contrairement à
+l’ancien essai isolé, ce mode explicitement activé utilise les événements
+habituels, la boîte d’envoi et les notifications contextualisées. Les images
+intermédiaires ne sont pas conservées. Le message est commun à la fiche, aux
+alertes web et au push ; la visibilité personnelle de l’écran verrouillé reste
+respectée. Une personne connue reste silencieuse en l’absence d’arme ; une arme
+probable peut justifier une notification même si le visage est reconnu.
+
+Un candidat proche retient la présence ordinaire au maximum 4,5 secondes pour
+éviter deux notifications immédiates. Un franchissement n’est jamais retardé.
+Les événements ordinaires sont espacés d’au moins 15 secondes ; les suspicions
+répétées d’au moins 30 secondes, avec regroupement serveur habituel. Une suspicion
+associée à une personne peut relever une précédente arme seule. Une panne du
+modèle d’arme conserve le chemin d’intrusion ; une panne de l’API combinée reprend
+le même événement/capture sur l’API ordinaire, sans fabriquer une preuve d’arme.
+Arrêt, changement de compte, retrait des droits et horaires interrompent les
+analyses et invalident les réponses tardives. Les horaires sont revérifiés après
+les inférences avant stockage. Les nouvelles ressources mobiles nécessitent
+une mise à jour de l’application pour l’affichage au premier plan.
+
 **Interface simplifiée le 21 octobre :** deux boutons « Démarrer » et
 « Arrêter », état « Arrêté », panneau de résultat compact et vidéo sur toute
 la largeur. Les explications sont repliées dans « Informations ». L’envoi

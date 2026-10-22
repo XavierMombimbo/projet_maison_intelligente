@@ -21,7 +21,7 @@ class AlertNotifications(private val context: Context) {
         }
     }
 
-    fun show(deliveryId: String, eventId: String?, lockScreen: String?) {
+    fun show(deliveryId: String, eventId: String?, lockScreen: String?, personWeaponSuspicion: Boolean = false) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N && !manager.areNotificationsEnabled()) return
         createChannel()
         val intent = Intent(context, MainActivity::class.java).apply {
@@ -41,7 +41,7 @@ class AlertNotifications(private val context: Context) {
         val notification = builder
             .setSmallIcon(R.drawable.ic_stat_alert)
             .setContentTitle("Sentinelle Maison")
-            .setContentText("Une nouvelle alerte est disponible.")
+            .setContentText(if (personWeaponSuspicion) "Personne détectée avec port d’arme probable" else "Une nouvelle alerte est disponible.")
             .setCategory(Notification.CATEGORY_ALARM)
             .setPriority(Notification.PRIORITY_HIGH)
             .setDefaults(Notification.DEFAULT_ALL)

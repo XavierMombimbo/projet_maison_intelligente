@@ -24,8 +24,8 @@
     async detect(video) {
       const policy = window.SentinelleDetectionPolicy;
       if (!policy) throw new Error("La politique de détection n’est pas chargée.");
-      const width = video.videoWidth || 640;
-      const height = video.videoHeight || 360;
+      const width = video.videoWidth || video.width || 640;
+      const height = video.videoHeight || video.height || 360;
       const scale = Math.min(MODEL_SIZE / width, MODEL_SIZE / height);
       const resizedWidth = Math.round(width * scale);
       const resizedHeight = Math.round(height * scale);

@@ -8,6 +8,7 @@
   data-weapon-url="{% url 'api-camera-weapon' %}"
   data-weapon-enabled="{{ weapon_available|yesno:'true,false' }}"
   data-weapon-academic-demo="{{ weapon_academic_demo|yesno:'true,false' }}"
+  data-combined-enabled="{{ combined_available|yesno:'true,false' }}"
   data-browser-context="{{ browser_camera_context }}"
   data-browser-context-url="{% url 'browser-camera-context' %}"
   data-state-url="{% url 'api-camera-state' %}"
@@ -39,8 +40,8 @@
   {% endif %}
   {% if weapon_available %}
   <section class="card weapon-test" aria-labelledby="weapon-test-title">
-    <div class="weapon-heading"><h2 id="weapon-test-title">Suspicion d’arme</h2>{% if weapon_academic_demo %}<span class="weapon-note">Mode académique</span>{% endif %}</div>
-    <p class="weapon-privacy">Démarrer active la webcam et envoie des images au serveur pour analyse.</p>
+    <div class="weapon-heading"><h2 id="weapon-test-title">{% if combined_available %}Intrusion et suspicion d’arme{% else %}Suspicion d’arme{% endif %}</h2>{% if weapon_academic_demo %}<span class="weapon-note">Mode académique</span>{% endif %}</div>
+    <p class="weapon-privacy">{% if combined_available %}Un seul démarrage pour les deux analyses. Des images sont envoyées au serveur ; seules les captures liées aux événements sont conservées.{% else %}Démarrer active la webcam et envoie des images au serveur pour analyse.{% endif %}</p>
     <input type="checkbox" id="weapon-review-toggle" hidden aria-hidden="true">
     <div class="weapon-actions">
       <button type="button" class="button" id="start-weapon-test" disabled>Démarrer</button>
@@ -53,8 +54,8 @@
     {% endif %}
     <details class="disclosure"><summary>Informations</summary><div class="disclosure-body">
       <p>Les horaires de surveillance sont respectés. Montrez une image ou un objet factice pour une démonstration.</p>
-      <p>Une image est envoyée toutes les 1,5 seconde pendant l’analyse d’arme, sans conservation de ces images. Plusieurs détections cohérentes sont nécessaires avant d’afficher « Suspicion d’arme ». Ce résultat reste à vérifier.</p>
-      {% if weapon_academic_demo %}<p>Mode académique : une suspicion répétée enregistre un événement expérimental et affiche un lien ici. Aucune image conservée, aucun envoi vers un téléphone, aucune sirène.</p>{% elif weapon_mode == 'review' %}<p>Résultat à l’écran uniquement, aucune notification et aucune sirène d’arme.</p>{% endif %}
+      <p>Une image est envoyée toutes les 1,5 seconde pendant l’analyse d’arme. Plusieurs détections cohérentes sont nécessaires avant d’afficher une suspicion. Ce résultat reste à vérifier.</p>
+      {% if combined_available %}<p>Une arme probable repérée près d’une personne sur plusieurs images déclenche « Personne détectée avec port d’arme probable ». L’événement réunit les deux résultats et sa capture. Les notifications suivent vos préférences ; les analyses ordinaires continuent si le modèle d’arme est indisponible. Le modèle reste expérimental.</p>{% elif weapon_academic_demo %}<p>Mode académique : une suspicion répétée enregistre un événement expérimental et affiche un lien ici. Aucune image conservée, aucun envoi vers un téléphone, aucune sirène.</p>{% elif weapon_mode == 'review' %}<p>Résultat à l’écran uniquement, aucune notification et aucune sirène d’arme.</p>{% endif %}
       {% if web_face_recognition %}<p>La reconnaissance faciale concerne les captures d’événements habituels : elles sont comparées sur le serveur aux visages enregistrés de cette maison. Une présence reconnue ne déclenche pas d’alerte de présence ; les passages interdits restent signalés.</p>{% endif %}
     </div></details>
   </section>
@@ -100,12 +101,12 @@
 <script src="{% static 'js/temporal-tracker.js' %}?v=20260926-rules2"></script>
 <script src="{% static 'js/detection-rules.js' %}?v=20260925-rules1"></script>
 <script src="{% static 'vendor/yolo/ort.wasm.min.js' %}?v=20260906-yolo"></script>
-<script src="{% static 'js/yolo-detector.js' %}?v=20260925-multiclass1"></script>
+<script src="{% static 'js/yolo-detector.js' %}?v=20261022-combined1"></script>
 <script src="{% static 'vendor/tf-4.22.0.min.js' %}?v=20260902-runtime4"></script>
 <script src="{% static 'vendor/coco-ssd-2.2.3.min.js' %}?v=20260902-runtime4"></script>
 <script src="{% static 'js/event-contract-v2.js' %}?v=20260925-rules1"></script>
 <script src="{% static 'js/browser-camera-store.js' %}?v=20261018-account1"></script>
 <script src="{% static 'js/browser-face-result.js' %}?v=20261019-face1"></script>
-<script src="{% static 'js/weapon-review.js' %}?v=20261021-simple1"></script>
-<script src="{% static 'js/camera-monitor.js' %}?v=20261021-simple1"></script>
+<script src="{% static 'js/weapon-review.js' %}?v=20261022-combined1"></script>
+<script src="{% static 'js/camera-monitor.js' %}?v=20261022-combined1"></script>
 {% endblock %}

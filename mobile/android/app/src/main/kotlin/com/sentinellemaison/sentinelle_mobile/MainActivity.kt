@@ -47,7 +47,8 @@ class MainActivity : FlutterActivity() {
                     result.error("invalid_delivery", "Identifiant manquant", null)
                 } else {
                     try {
-                        alerts.show(deliveryId, call.argument<String>("event_id"), call.argument<String>("lock_screen"))
+                        alerts.show(deliveryId, call.argument<String>("event_id"), call.argument<String>("lock_screen"),
+                            call.argument<Boolean>("person_weapon_suspicion") == true)
                         result.success(null)
                     } catch (_: SecurityException) {
                         result.error("permission_denied", "Notifications non autorisees", null)

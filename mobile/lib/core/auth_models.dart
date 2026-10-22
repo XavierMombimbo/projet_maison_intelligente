@@ -102,6 +102,9 @@ class RecentEvent {
   bool get isKnownPresence =>
       grouped && reason.startsWith('Profil volontaire reconnu');
 
+  bool get hasProbableWeapon =>
+      reason.startsWith('Personne détectée avec port d’arme probable');
+
   Map<String, Object?> toCache() => {
     'id': id,
     'camera_name': cameraName,

@@ -3,6 +3,7 @@ from channels.layers import get_channel_layer
 from django.urls import reverse
 
 from .models import Evenement
+from .weapon_messages import person_weapon_suspected
 
 
 def alert_group_name(house_id) -> str:
@@ -41,6 +42,7 @@ def _event_payload(event: Evenement) -> dict:
         "alert_priority_label": event.get_priorite_alerte_display(),
         "alert_reason": event.raison_priorite,
         "weapon_suspicion": (event.metadonnees.get("weapon_verification") or {}).get("state") == "suspected",
+        "person_weapon_suspicion": person_weapon_suspected(event.metadonnees),
         "notification_suppressed": event.notification_supprimee,
         "created_at": event.horodatage.isoformat(),
         "detail_url": reverse("event-detail", kwargs={"pk": event.pk}),

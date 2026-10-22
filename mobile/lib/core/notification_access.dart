@@ -8,12 +8,14 @@ class NotificationAccess {
     String deliveryId, {
     String? eventId,
     String lockScreen = 'private',
+    bool personWeaponSuspicion = false,
   }) async {
     if (kIsWeb || defaultTargetPlatform != TargetPlatform.android) return;
     await _channel.invokeMethod<void>('showAlert', {
       'delivery_id': deliveryId,
       'event_id': ?eventId,
       'lock_screen': lockScreen,
+      if (personWeaponSuspicion) 'person_weapon_suspicion': true,
     });
   }
 

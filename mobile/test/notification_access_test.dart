@@ -53,6 +53,9 @@ void main() {
       'event_id': 'event-id',
       'lock_screen': 'secret',
     });
+    await NotificationAccess.showAlert('combined', personWeaponSuspicion: true);
+    expect(calls.last.arguments['person_weapon_suspicion'], true);
+    expect(calls.last.arguments['lock_screen'], 'private');
   });
   test('le blocage Android rend la permission push refusée', () {
     expect(

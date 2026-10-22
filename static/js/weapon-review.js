@@ -1,6 +1,8 @@
 (function (global) {
   "use strict";
   const describe = result => {
+    if (result.person_weapon_suspicion === true) return "Personne détectée avec port d’arme probable";
+    if (result.combined && result.alert_title) return result.alert_title;
     if (result.state === "suspected") return "Suspicion d’arme";
     if (result.state === "candidate") return "Objet à vérifier";
     if (result.state === "clear") return "Aucune suspicion sur cette image";

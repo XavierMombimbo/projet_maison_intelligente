@@ -1,5 +1,6 @@
 """Human-readable summaries; never infer delivery or identity from a score."""
 from django import template
+from homes.weapon_messages import PERSON_WEAPON_TITLE, person_weapon_suspected
 
 register = template.Library()
 
@@ -15,7 +16,7 @@ def event_summary(event):
                     siren="Non demandée")
     if (metadata.get("weapon_verification") or {}).get("state") == "suspected":
         weapon_status = {"new": "À vérifier · Urgent", "confirmed": "Signalement confirmé", "false_alarm": "Fausse alerte"}
-        return dict(title="Suspicion d’arme", heading=weapon_status.get(event.statut, "Objet à vérifier"), icon="eye", weapon=True,
+        return dict(title=PERSON_WEAPON_TITLE if person_weapon_suspected(metadata) else "Suspicion d’arme", heading=weapon_status.get(event.statut, "Objet à vérifier"), icon="eye", weapon=True,
                     message="Un objet ressemble à une arme. Vérifiez l’image avant toute décision.",
                     badge=weapon_status.get(event.statut, "À vérifier"),
                     style=event.statut, quiet=False,

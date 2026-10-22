@@ -910,7 +910,7 @@ class CameraMonitorPageTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "La webcam reste désactivée jusqu’à votre clic")
-        self.assertContains(response, "Autoriser et démarrer la webcam")
+        self.assertContains(response, 'id="start-camera"')
         self.assertNotContains(response, "Simuler une détection")
         self.assertNotContains(response, "<video autoplay")
 
