@@ -31,6 +31,14 @@
     {% elif camera.statut_appairage == "revoked" %}
       <p class="error">L’accès de cette caméra a été retiré. Elle ne peut plus transmettre d’événements.</p>
     {% endif %}
+    {% if camera.maison.proprietaire == user and camera.statut_appairage != "revoked" %}
+      <div class="control-section">
+        <p>Pour reconnecter cette caméra ou changer d’appareil, créez un nouveau code. L’ancien appairage sera désactivé immédiatement.</p>
+        <form method="post" action="{% url 'pairing-code-regenerate' camera.pk %}" data-confirm="Remplacer l’appairage ? L’ancien appareil sera déconnecté. Vous devrez utiliser le nouveau code pour reconnecter la caméra.">
+          {% csrf_token %}<button class="button secondary" type="submit">Régénérer le code d’appairage</button>
+        </form>
+      </div>
+    {% endif %}
   </article>
   <article class="card preview"><span class="camera-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M15 10l4.5-2.5v9L15 14"/><rect x="3" y="6" width="12" height="12" rx="3"/></svg></span><h2>Aperçu protégé</h2><p>Le flux vidéo n’est pas diffusé sur cette page. Retrouvez les images enregistrées dans les événements ci-dessous.</p>{% if camera.statut_appairage == 'paired' and camera.type_source == 'webcam' %}<a class="button secondary" href="{% url 'camera-monitor' %}?camera={{ camera.pk }}">Ouvrir le mode caméra</a>{% endif %}</article>
 </section>

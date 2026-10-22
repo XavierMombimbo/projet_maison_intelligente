@@ -308,6 +308,7 @@
       try {
         const url = new URL(root.dataset.browserContextUrl, window.location.origin);
         url.searchParams.set("camera", credentials.cameraId);
+        url.searchParams.set("pairing_version", String(credentials.pairingVersion || 1));
         response = await fetch(url, {
           credentials: "same-origin", cache: "no-store",
           headers: {"X-Sentinelle-Camera-Context": root.dataset.browserContext}
@@ -852,9 +853,10 @@
       stateTimer = setInterval(refreshState, 5000);
       heartbeatTimer = setInterval(heartbeat, 30000);
     } catch (error) {
+      if (error.code === "INVALID_CREDENTIALS") invalidateSession();
       startButton.disabled = true;
       pairingLink.hidden = false;
-      setStatus("Impossible de lire l’identité locale de la caméra.", true);
+      setStatus(error.code === "INVALID_CREDENTIALS" ? error.message : "Impossible de lire l’identité locale de la caméra.", true);
     }
   });
 })();

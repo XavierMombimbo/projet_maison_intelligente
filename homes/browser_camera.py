@@ -54,6 +54,13 @@ class BrowserCameraContextView(LoginRequiredMixin, View):
             except ValueError:
                 return JsonResponse({"detail": "Caméra non autorisée."}, status=404)
             camera = get_object_or_404(cameras, pk=camera_id)
+            # Existing browser records predate pairing generations and belong
+            # only to generation 1. Never upgrade a stale record implicitly.
+            generation = request.GET.get("pairing_version", "1")
+            if generation != str(camera.version_jeton):
+                response = JsonResponse({"detail": "L’ancien appairage a été remplacé. Connectez cet appareil avec le nouveau code."}, status=409)
+                response["Cache-Control"] = "no-store, private"
+                return response
             rate = check_rate_limit("camera_token", request, identifier=context)
             if not rate.allowed:
                 response = JsonResponse({"detail": "Trop de renouvellements. Réessayez dans un instant."}, status=429)

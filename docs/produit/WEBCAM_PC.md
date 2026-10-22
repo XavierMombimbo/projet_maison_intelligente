@@ -9,7 +9,7 @@ vérifiée à chaque requête ; perte de droits, déconnexion ou changement de
 compte invalident cet accès. Les POST conservent la protection CSRF et la
 signature des événements.
 
-Le navigateur conserve uniquement l'identifiant de caméra et la date
+Le navigateur conserve uniquement l'identifiant de caméra, la date et la version
 d'appairage, jamais le secret appareil, le jeton ou la clé de signature.
 À la première lecture, les anciennes entrées sont expurgées de leurs secrets
 et filtrées selon les droits du compte. Les jetons courts et clés nécessaires
@@ -23,6 +23,29 @@ son authentification appareil indépendante ; leurs identités DPAPI ne sont
 ni effacées ni révoquées par cette migration du navigateur. Les anciens jetons
 appareil sont refusés dans les requêtes de navigateur : le mode web obtient
 désormais son autorisation depuis la session connectée.
+
+## Remplacer un appairage
+
+Dans la fiche caméra, le propriétaire dispose du bouton **Régénérer le code
+d’appairage**, avec une explication et une confirmation avant remplacement.
+Le nouveau code est valable cinq minutes, une seule fois. Dès sa génération,
+l’ancien appareil, ses jetons, son secret et sa clé de signature ne sont plus
+acceptés ; les anciens codes de cette caméra ne sont jamais réémis.
+La caméra attend un nouvel appairage. Son historique, sa source RTSP chiffrée,
+ses réglages et ses horaires sont conservés. L’ancien état de connexion et la
+confirmation de surveillance sont effacés pour attendre le nouvel appareil.
+
+Sur l’appareil souhaité, ouvrir **Connecter une caméra**, avec un compte autorisé,
+puis saisir le nouveau code. L’ancien navigateur ne renouvelle pas automatiquement
+son accès après cette connexion : sa version locale d’appairage est obsolète.
+Les entrées antérieures sans version restent compatibles avec la version 1
+uniquement ; aucune mise à niveau implicite. Les jetons autonomes sont révoqués
+par la version serveur et le remplacement de l’identité appareil.
+
+Le remplacement est un POST protégé par CSRF, réservé au propriétaire, limité
+en fréquence et audité sans code ni secret. Il est transactionnel : un échec de
+génération conserve l’ancien accès. Une caméra révoquée définitivement ne peut
+pas être réactivée par ce bouton. Aucune webcam ne démarre pendant l’appairage.
 
 ## Service PC autonome
 

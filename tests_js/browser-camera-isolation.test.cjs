@@ -36,14 +36,34 @@ test('legacy secrets are scrubbed and the most recent foreign camera is never se
     {cameraId: 'a', pairedAt: 100, deviceSecret: 'old-secret', accessToken: 'old-token', eventSigningKey: 'old-signing-key'},
     {cameraId: 'b', pairedAt: 1, deviceId: 'old-id'},
   ]);
-  assert.deepEqual(plain(await app.api.read(['b'])), {cameraId: 'b', pairedAt: 1});
-  assert.deepEqual([...app.rows.values()], [{cameraId: 'a', pairedAt: 100}, {cameraId: 'b', pairedAt: 1}]);
+  assert.deepEqual(plain(await app.api.read(['b'])), {cameraId: 'b', pairedAt: 1, pairingVersion: 1});
+  assert.deepEqual([...app.rows.values()], [{cameraId: 'a', pairedAt: 100, pairingVersion: 1}, {cameraId: 'b', pairedAt: 1, pairingVersion: 1}]);
 });
 
 test('a forbidden requested camera cannot fall back to another camera', async () => {
   const app = storage([{cameraId: 'a', pairedAt: 10}, {cameraId: 'b', pairedAt: 1}]);
   assert.equal(await app.api.read(['b'], 'a'), null);
   assert.equal(await app.api.read([]), null);
+});
+
+test('pairing generation survives reads without upgrading a legacy record', async () => {
+  const app = storage([{cameraId: 'new', pairedAt: 20, pairingVersion: 3}, {cameraId: 'old', pairedAt: 10}]);
+  assert.equal((await app.api.read(['new'])).pairingVersion, 3);
+  assert.equal((await app.api.read(['old'])).pairingVersion, 1);
+});
+
+test('successful pairing persists its generation without device secrets', async () => {
+  let saved;
+  const status = {textContent: '', classList: {add() {}}};
+  vm.runInNewContext(script('pair-camera.js'), {
+    document: {getElementById: id => id === 'camera-credentials' ? {textContent: JSON.stringify({cameraId: 'new', pairingVersion: 4})} : status},
+    window: {SentinelleBrowserCameraStore: {save: async value => {saved = value;}}}, Date,
+  });
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(saved.pairingVersion, 4);
+  assert.equal(saved.cameraId, 'new');
+  assert.deepEqual(Object.keys(saved).sort(), ['cameraId', 'pairedAt', 'pairingVersion']);
+  assert.match(status.textContent, /webcam reste éteinte/);
 });
 
 test('logout and other-tab account changes notify an active monitor', () => {
@@ -60,7 +80,7 @@ test('logout and other-tab account changes notify an active monitor', () => {
   assert.deepEqual(events, ['sentinelle:account-changed', 'sentinelle:account-changed', 'sentinelle:account-changed']);
 });
 
-function monitor({authorized = true} = {}) {
+function monitor({authorized = true, pairingVersion = 1, serverGeneration = pairingVersion} = {}) {
   const nodes = {}, events = {};
   const make = () => ({textContent: '', hidden: false, disabled: false, handlers: {},
     classList: {toggle() {}, remove() {}}, addEventListener(key, fn) {this.handlers[key] = fn;},
@@ -71,13 +91,16 @@ function monitor({authorized = true} = {}) {
   const document = {addEventListener: (_, fn) => {ready = fn;}, getElementById: id => id === 'camera-monitor' ? root : (nodes[id] ||= make())};
   const window = {isSecureContext: true, location: {origin: 'https://example.test'},
     addEventListener: (key, fn) => {events[key] = fn;}, SentinelleTemporalTracker: class {reset() {}},
-    SentinelleBrowserCameraStore: {read: async ids => ids.includes('own') ? {cameraId: 'own'} : null}};
-  const response = payload => ({ok: true, status: 200, headers: {get: name => name === 'Content-Type' ? 'application/json' : null}, json: async () => payload});
+    SentinelleBrowserCameraStore: {read: async ids => ids.includes('own') ? {cameraId: 'own', pairingVersion} : null}};
+  const response = (payload, status = 200) => ({ok: status === 200, status, headers: {get: name => name === 'Content-Type' ? 'application/json' : null}, json: async () => payload});
   vm.runInNewContext(script('camera-monitor.js'), {window, document, URL, Headers, Date, console,
     navigator: {mediaDevices: {getUserMedia: () => {webcamCalls++; return new Promise(resolve => {resolveCamera = resolve;});}}},
     fetch: async (url, options) => {
       requests.push(String(url));
-      if (String(url).includes('camera=own')) return response({access_token: 'fixture-token', event_signing_key: 'fixture-key'});
+      if (String(url).includes('camera=own')) {
+        if (new URL(url).searchParams.get('pairing_version') !== String(serverGeneration)) return response({detail: 'Old pairing replaced'}, 409);
+        return response({access_token: 'fixture-token', event_signing_key: 'fixture-key'});
+      }
       if (String(url).includes('/context/')) return response({camera_ids: authorized ? ['own'] : []});
       return response({name: 'Own camera', monitoring_active: true, analysis: {}});
     }, setInterval: () => 1, clearInterval() {}, clearTimeout() {}, setTimeout});
@@ -92,6 +115,21 @@ test('an account with no allowed camera never requests a foreign state or opens 
   assert.deepEqual(app.requests, ['/context/']);
   assert.equal(app.nodes['start-camera'].disabled, true);
   assert.match(app.nodes['camera-status'].textContent, /Aucune caméra.*compte/);
+});
+
+test('a replaced browser pairing cannot renew or start the camera', async () => {
+  const app = monitor({pairingVersion: 1, serverGeneration: 2}); await app.ready();
+  assert.equal(app.webcamCalls(), 0);
+  assert.equal(app.nodes['start-camera'].disabled, true);
+  assert.match(app.nodes['camera-status'].textContent, /Appairez de nouveau/);
+  assert.equal(app.requests.some(url => url === '/state/'), false);
+});
+
+test('new pairing sends its generation and can read camera state with webcam off', async () => {
+  const app = monitor({pairingVersion: 2}); await app.ready();
+  assert.equal(app.nodes['start-camera'].disabled, false);
+  assert.equal(app.webcamCalls(), 0);
+  assert.ok(app.requests.some(url => url.includes('pairing_version=2')));
 });
 
 test('account change clears camera metadata and blocks a new camera start', async () => {

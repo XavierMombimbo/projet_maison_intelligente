@@ -4,6 +4,7 @@
 <section class="pairing-panel">
   <p class="eyebrow">Code temporaire</p>
   <h1>Connecter « {{ camera.nom }} »</h1>
+  {% if pairing_replaced %}<p class="notice" role="status"><strong>L’ancien appairage a été remplacé.</strong> L’ancien appareil n’a plus accès à cette caméra. Utilisez ce nouveau code pour la reconnecter.</p>{% endif %}
   <p class="lead">Sur l’ordinateur qui servira de caméra, ouvrez la page <strong>Connecter une caméra</strong> et saisissez ce code.</p>
   <div class="pairing-code" aria-label="Code {{ plain_code }}">{{ plain_code }}</div>
   <p class="countdown"><span class="status-dot"></span> Expire à {{ pairing_code.date_expiration|date:"H:i:s" }} · utilisation unique</p>

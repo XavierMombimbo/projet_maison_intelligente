@@ -137,9 +137,10 @@ class PairingViewsAndApiTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response.context["paired"])
-        self.assertContains(response, "Appairage réussi")
+        self.assertContains(response, 'id="camera-credentials"')
         self.assertIn("no-store", response.headers["Cache-Control"])
-        self.assertEqual(set(response.context["device_credentials"]), {"cameraId"})
+        self.assertEqual(set(response.context["device_credentials"]), {"cameraId", "pairingVersion"})
+        self.assertEqual(response.context["device_credentials"]["pairingVersion"], 1)
 
     def test_camera_can_renew_token_and_read_only_its_state(self):
         _, plain_code = create_pairing_code(self.camera)

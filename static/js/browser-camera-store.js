@@ -9,7 +9,8 @@
     request.onsuccess = () => resolve(request.result);
     request.onerror = () => reject(request.error);
   });
-  const metadata = value => ({cameraId: String(value.cameraId), pairedAt: Number(value.pairedAt) || 0});
+  const metadata = value => ({cameraId: String(value.cameraId), pairedAt: Number(value.pairedAt) || 0,
+    pairingVersion: Number.isSafeInteger(value.pairingVersion) && value.pairingVersion > 0 ? value.pairingVersion : 1});
   const read = async (allowedIds, requestedId = "") => {
     const database = await open();
     return new Promise((resolve, reject) => {

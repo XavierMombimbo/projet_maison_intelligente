@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from datetime import timedelta
 
 from django.db import transaction
+from django.db.models import Q
 from django.utils import timezone
 
 from .crypto import decrypt_event_signing_key, encrypt_event_signing_key
@@ -50,14 +51,35 @@ def ensure_event_signing_key(camera: Camera) -> str:
         return signing_key
 
 
-def create_pairing_code(camera: Camera, *, now=None) -> tuple[CodeAppairage, str]:
+def create_pairing_code(camera: Camera, *, now=None, replace_existing=False) -> tuple[CodeAppairage, str]:
     now = now or timezone.now()
     with transaction.atomic():
         camera = Camera.objects.select_for_update().select_related("maison").get(pk=camera.pk)
         if camera.statut_appairage == StatutAppairage.REVOQUEE:
             raise PairingError("Une caméra révoquée ne peut pas être appairée de nouveau.")
-        if camera.statut_appairage == StatutAppairage.APPAIREE:
+        if camera.statut_appairage == StatutAppairage.APPAIREE and not replace_existing:
             raise PairingError("Cette caméra est déjà appairée.")
+
+        if replace_existing:
+            # Invalidate both gateway JWTs and browser pairing metadata. Keep
+            # the camera, its source configuration, history and chosen rules.
+            camera.version_jeton += 1
+            camera.statut_appairage = StatutAppairage.NON_APPAIREE
+            camera.identifiant_appareil = None
+            camera.secret_appareil_hash = ""
+            camera.cle_signature_evenement_chiffree = None
+            camera.nonce_cle_signature_evenement = None
+            camera.date_appairage = None
+            camera.derniere_connexion = None
+            camera.surveillance_appliquee = None
+            camera.surveillance_appliquee_le = None
+            camera.version_planning_appliquee = ""
+            camera.save(update_fields=(
+                "version_jeton", "statut_appairage", "identifiant_appareil",
+                "secret_appareil_hash", "cle_signature_evenement_chiffree",
+                "nonce_cle_signature_evenement", "date_appairage", "derniere_connexion",
+                "surveillance_appliquee", "surveillance_appliquee_le", "version_planning_appliquee",
+            ))
 
         CodeAppairage.objects.filter(
             camera=camera, utilise=False, date_expiration__gt=now
@@ -67,7 +89,8 @@ def create_pairing_code(camera: Camera, *, now=None) -> tuple[CodeAppairage, str
             plain_code = f"{secrets.randbelow(1_000_000):06d}"
             code_hash = hash_pairing_code(plain_code)
             collision = CodeAppairage.objects.filter(
-                code_hash=code_hash, utilise=False, date_expiration__gt=now
+                Q(camera=camera) | Q(utilise=False, date_expiration__gt=now),
+                code_hash=code_hash,
             ).exists()
             if not collision:
                 break

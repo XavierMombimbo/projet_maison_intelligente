@@ -899,6 +899,8 @@ class CameraToggleView(LoginRequiredMixin, View):
 
 
 class PairingCodeCreateView(LoginRequiredMixin, View):
+    replace_existing = False
+
     def post(self, request, pk):
         camera = get_object_or_404(
             Camera.objects.select_related("maison"), pk=pk, maison__proprietaire=request.user
@@ -920,7 +922,7 @@ class PairingCodeCreateView(LoginRequiredMixin, View):
             response["Retry-After"] = str(rate.retry_after)
             return response
         try:
-            pairing_code, plain_code = create_pairing_code(camera)
+            pairing_code, plain_code = create_pairing_code(camera, replace_existing=self.replace_existing)
         except PairingError as exc:
             record_audit(
                 "camera.pairing_code.failure",
@@ -933,7 +935,7 @@ class PairingCodeCreateView(LoginRequiredMixin, View):
             messages.error(request, str(exc))
             return redirect("camera-detail", pk=camera.pk)
         record_audit(
-            "camera.pairing_code.created",
+            "camera.pairing_code.regenerated" if self.replace_existing else "camera.pairing_code.created",
             request=request,
             user=request.user,
             camera=camera,
@@ -943,10 +945,15 @@ class PairingCodeCreateView(LoginRequiredMixin, View):
         response = render(
             request,
             "homes/pairing_code.html",
-            {"camera": camera, "pairing_code": pairing_code, "plain_code": plain_code},
+            {"camera": camera, "pairing_code": pairing_code, "plain_code": plain_code,
+             "pairing_replaced": self.replace_existing},
         )
         patch_cache_control(response, no_store=True, private=True)
         return response
+
+
+class PairingCodeRegenerateView(PairingCodeCreateView):
+    replace_existing = True
 
 
 class ConnectCameraView(LoginRequiredMixin, FormView):
@@ -994,6 +1001,7 @@ class ConnectCameraView(LoginRequiredMixin, FormView):
                 camera=credentials.camera,
                 device_credentials={
                     "cameraId": str(credentials.camera.pk),
+                    "pairingVersion": credentials.camera.version_jeton,
                 },
             )
         )
