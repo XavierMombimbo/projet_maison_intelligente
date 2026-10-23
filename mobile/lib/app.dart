@@ -28,8 +28,10 @@ part 'ui/shared_widgets.dart';
 part 'monitoring_screens.dart';
 
 const _navy = Color(0xFF0F172A);
-const _green = Color(0xFF087A55);
-const _mint = Color(0xFFDFF6EC);
+// Exact background and line colors of the Sentinelle logo.
+const _green = Color(0xFF23484C);
+const _mint = Color(0xFFB5E9DB);
+const _brandBorder = Color(0xFF9CC6BC);
 const _surface = Color(0xFFF2F6F5);
 const _border = Color(0xFFD8E2DF);
 const _neutralAlert = Color(0xFF425D69);
@@ -184,8 +186,16 @@ class _SentinelleAppState extends State<SentinelleApp> {
         ColorScheme.fromSeed(
           seedColor: _green,
           brightness: brightness,
-          primary: dark ? const Color(0xFF45D6A5) : _green,
-          secondary: const Color(0xFF20B486),
+          primary: dark ? _mint : _green,
+          onPrimary: dark ? _green : Colors.white,
+          primaryContainer: dark ? _green : _mint,
+          onPrimaryContainer: dark ? _mint : _green,
+          secondary: dark ? _mint : _green,
+          onSecondary: dark ? _green : Colors.white,
+          secondaryContainer: dark ? _green : _mint,
+          onSecondaryContainer: dark ? _mint : _green,
+          tertiary: dark ? _mint : _green,
+          onTertiary: dark ? _green : Colors.white,
           surface: dark ? const Color(0xFF182237) : Colors.white,
           error: dark ? const Color(0xFFB8C6CD) : _neutralAlert,
         ).copyWith(
@@ -304,16 +314,20 @@ class _SentinelleAppState extends State<SentinelleApp> {
       navigationBarTheme: NavigationBarThemeData(
         height: 64,
         backgroundColor: dark ? const Color(0xFF111B2D) : Colors.white,
-        indicatorColor: dark ? const Color(0xFF12392F) : _mint,
-        iconTheme: WidgetStatePropertyAll(
-          IconThemeData(
-            color: dark ? const Color(0xFFF8FAFC) : const Color(0xFF111827),
+        indicatorColor: scheme.primaryContainer,
+        iconTheme: WidgetStateProperty.resolveWith((states) {
+          return IconThemeData(
+            color: states.contains(WidgetState.selected)
+                ? scheme.onPrimaryContainer
+                : scheme.onSurfaceVariant,
             size: 21,
-          ),
-        ),
+          );
+        }),
         labelTextStyle: WidgetStateProperty.resolveWith((states) {
           return TextStyle(
-            color: dark ? const Color(0xFFF8FAFC) : const Color(0xFF111827),
+            color: states.contains(WidgetState.selected)
+                ? scheme.onPrimaryContainer
+                : scheme.onSurfaceVariant,
             fontSize: 10.5,
             fontWeight: states.contains(WidgetState.selected)
                 ? FontWeight.w700

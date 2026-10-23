@@ -1,5 +1,5 @@
 {% load static %}
-const CACHE = 'sentinelle-public-v2-brand';
+const CACHE = 'sentinelle-public-v3-brand-colors';
 const LOGO = '{% static "icons/sentinelle.svg" %}';
 const OFFLINE = '/hors-ligne/';
 self.addEventListener('install', (event) => {

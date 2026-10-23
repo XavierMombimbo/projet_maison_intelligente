@@ -63,13 +63,13 @@ class _PriorityPill extends StatelessWidget {
     final dark = Theme.of(context).brightness == Brightness.dark;
     final background = urgent
         ? (dark ? const Color(0xFF314047) : const Color(0xFFE8EDF0))
-        : (dark ? const Color(0xFF12392F) : _mint);
+        : (dark ? _green : _mint);
     final border = urgent
         ? (dark ? const Color(0xFF607078) : const Color(0xFFB8C6CD))
-        : const Color(0xFFB9E8D6);
+        : _brandBorder;
     final foreground = urgent
         ? (dark ? const Color(0xFFF0F5F7) : _navy)
-        : (dark ? const Color(0xFF72E4BD) : const Color(0xFF075C43));
+        : (dark ? _mint : _green);
     return Container(
       constraints: const BoxConstraints(minHeight: 24),
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),

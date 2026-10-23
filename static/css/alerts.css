@@ -2,7 +2,7 @@
 .realtime-bar > div { display: flex; align-items: center; gap: 10px; }
 .realtime-bar .button.secondary { min-height: 40px; margin: 0; padding: 8px 13px; }
 .connection-dot { width: 10px; height: 10px; flex: 0 0 auto; background: #d28a0b; border-radius: 50%; box-shadow: 0 0 0 4px rgba(210,138,11,.14); }
-.connection-dot.is-online { background: var(--success); box-shadow: 0 0 0 4px rgba(8,122,85,.14); }
+.connection-dot.is-online { background: var(--success); box-shadow: 0 0 0 4px rgba(var(--brand-rgb), .14); }
 .connection-dot.is-offline { background: var(--danger); box-shadow: 0 0 0 4px rgba(180,35,24,.13); }
 .alerts-section { margin-bottom: 52px; }
 .event-row.is-new { animation: alert-highlight 2.2s ease-out; }
